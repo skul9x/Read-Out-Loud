@@ -9,6 +9,9 @@
     <!-- Quyền cần thiết để hiển thị thông báo (cho Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- *** QUYỀN MỚI: Cho phép ứng dụng thay đổi cài đặt âm thanh của hệ thống *** -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
 
     <application
         android:allowBackup="true"

@@ -17,100 +17,136 @@
         app:title="@string/app_name"
         app:titleTextColor="?attr/colorOnSurface" />
 
-    <!-- KHỐI ĐIỀU KHIỂN MỚI Ở TRÊN CÙNG -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardControls"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/pasteButton"
-                style="@style/Widget.Material3.Button.TextButton.Icon"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Dán"
-                app:icon="@drawable/ic_paste" /> <!-- SỬA LỖI Ở ĐÂY -->
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/readButton"
-                style="@style/Widget.Material3.Button.Icon"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="Đọc"
-                app:icon="@android:drawable/ic_media_play" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/stopButton"
-                style="@style/Widget.Material3.Button.OutlinedButton.Icon"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Dừng"
-                app:icon="@android:drawable/ic_media_pause" />
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-
     <ScrollView
+        android:id="@+id/mainScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardControls"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="16dp">
+            android:padding="16dp">
+
+            <!-- Khối điều khiển chính -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardControls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/pasteButton"
+                        style="@style/Widget.Material3.Button.TextButton.Icon"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Dán"
+                        app:icon="@drawable/ic_paste" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/readButton"
+                        style="@style/Widget.Material3.Button.Icon"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="Đọc"
+                        app:icon="@android:drawable/ic_media_play" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/stopButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Dừng"
+                        app:icon="@android:drawable/ic_media_pause" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Khối điều khiển âm lượng hệ thống -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardVolume"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Âm lượng hệ thống"
+                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/volumeToggleGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/volumeButton80"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="80%" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/volumeButton85"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="85%" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/volumeButton90"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="90%" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Khối nhập văn bản -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
-
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/textInputLayout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="250dp"
                     android:hint="Dán hoặc nhập văn bản vào đây...">
-
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editText"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:gravity="top"
                         android:inputType="textMultiLine"
-                        android:minLines="8"
-                        android:maxLines="15" />
+                        android:scrollbars="vertical"/>
                 </com.google.android.material.textfield.TextInputLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Khối chọn giọng đọc -->
@@ -121,45 +157,41 @@
                 android:layout_marginTop="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tùy chọn giọng đọc"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/languageSwitch"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Đọc tiếng Anh" />
-
-                    <TextView
-                        android:id="@+id/vietnameseOptionsLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Giọng đọc Tiếng Việt"
-                        android:textAppearance="?attr/textAppearanceLabelLarge" />
-
-                    <Spinner
-                        android:id="@+id/voiceSpinner"
+                    <!-- Giao diện chọn giọng đọc tiếng Việt được nâng cấp -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/vietnameseVoiceLayout"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:minHeight="48dp" />
-
+                        android:hint="Giọng đọc Tiếng Việt">
+                        <AutoCompleteTextView
+                            android:id="@+id/vietnameseVoiceAutoComplete"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            tools:text="Nữ miền Nam"/>
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Copyright -->
+            <TextView
+                android:id="@+id/copyrightText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:text="© 2025 by Nguyễn Duy Trường"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
