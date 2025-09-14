@@ -137,6 +137,8 @@ class TtsService : Service(), TextToSpeech.OnInitListener, AudioManager.OnAudioF
         }
     }
 
+    override fun onBind(intent: Intent?): IBinder? = null
+
     private fun requestAudioFocus(): Boolean {
         val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
@@ -329,7 +331,11 @@ class TtsService : Service(), TextToSpeech.OnInitListener, AudioManager.OnAudioF
         val chunks = mutableListOf<String>()
         var index = 0
         while (index < text.length) {
-            val endIndex = (index + maxLength).coerceAtMost(text.length)
+            var endIndex = (index + maxLength).coerceAtMost(text.length)
+            val sentenceEnd = text.lastIndexOfAny(charArrayOf('.', '!', '?'), endIndex)
+            if (sentenceEnd > index) {
+                endIndex = sentenceEnd + 1
+            }
             chunks.add(text.substring(index, endIndex))
             index = endIndex
         }
@@ -342,7 +348,5 @@ class TtsService : Service(), TextToSpeech.OnInitListener, AudioManager.OnAudioF
         currentState = State.IDLE
         super.onDestroy()
     }
-
-    override fun onBind(intent: Intent?): IBinder? = null
 }
 

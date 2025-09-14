@@ -1,8 +1,4 @@
 <resources>
     <string name="app_name">Read Out Loud</string>
-    <string name="qs_tile_label">Đọc Clipboard</string>
-    <string name="qs_tile_label_read">Đọc Clipboard</string>
-    <string name="qs_tile_label_pause">Tạm dừng</string>
-    <string name="qs_tile_label_resume">Tiếp tục</string>
 </resources>
 
