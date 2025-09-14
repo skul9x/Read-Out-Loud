@@ -228,4 +228,3 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
-

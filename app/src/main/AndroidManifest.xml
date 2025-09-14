@@ -2,14 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Quyền cần thiết -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
-        android:name=".TtsApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -23,18 +21,7 @@
         <service
             android:name=".TtsService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
-
-        <service
-            android:name=".QuickSettingsTileService"
-            android:exported="true"
-            android:icon="@drawable/ic_qs_read_clipboard"
-            android:label="@string/qs_tile_label_read"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
+            android:foregroundServiceType="dataSync" />
 
         <activity
             android:name=".MainActivity"
@@ -48,4 +35,3 @@
     </application>
 
 </manifest>
-

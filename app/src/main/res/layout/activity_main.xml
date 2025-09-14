@@ -31,7 +31,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Khối điều khiển chính -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,7 +74,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Khối âm lượng -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -130,7 +128,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Khối nhập văn bản -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -156,7 +153,6 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Khối tùy chỉnh giọng đọc -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -254,4 +250,3 @@
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
-
