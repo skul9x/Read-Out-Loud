@@ -2,18 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Quyền cần thiết để chạy dịch vụ nền (cho Android 9+) -->
+    <!-- Quyền cần thiết -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
-    <!-- Quyền cần thiết để hiển thị thông báo (cho Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- *** QUYỀN MỚI: Cho phép ứng dụng thay đổi cài đặt âm thanh của hệ thống *** -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
+        android:name=".TtsApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -24,11 +20,21 @@
         android:theme="@style/Theme.ReadOutLoud"
         tools:targetApi="31">
 
-        <!-- Khai báo Service để đọc văn bản trong nền -->
         <service
             android:name=".TtsService"
-            android:foregroundServiceType="dataSync"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name=".QuickSettingsTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_read_clipboard"
+            android:label="@string/qs_tile_label_read"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".MainActivity"
@@ -42,3 +48,4 @@
     </application>
 
 </manifest>
+

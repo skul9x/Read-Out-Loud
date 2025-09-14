@@ -18,14 +18,12 @@
         app:titleTextColor="?attr/colorOnSurface" />
 
     <ScrollView
-        android:id="@+id/mainScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
-        android:fillViewport="true">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,16 +33,17 @@
 
             <!-- Khối điều khiển chính -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardControls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="8dp">
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/pasteButton"
                         style="@style/Widget.Material3.Button.TextButton.Icon"
@@ -53,6 +52,7 @@
                         android:layout_weight="1"
                         android:text="Dán"
                         app:icon="@drawable/ic_paste" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/readButton"
                         style="@style/Widget.Material3.Button.Icon"
@@ -63,6 +63,7 @@
                         android:layout_weight="1"
                         android:text="Đọc"
                         app:icon="@android:drawable/ic_media_play" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/stopButton"
                         style="@style/Widget.Material3.Button.OutlinedButton.Icon"
@@ -74,19 +75,20 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Khối điều khiển âm lượng hệ thống -->
+            <!-- Khối âm lượng -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardVolume"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -98,23 +100,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
-                        <com.google.android.material.button.MaterialButton
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <Button
                             android:id="@+id/volumeButton80"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="80%" />
-                        <com.google.android.material.button.MaterialButton
+
+                        <Button
                             android:id="@+id/volumeButton85"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="85%" />
-                        <com.google.android.material.button.MaterialButton
+
+                        <Button
                             android:id="@+id/volumeButton90"
                             style="?attr/materialButtonOutlinedStyle"
                             android:layout_width="0dp"
@@ -127,71 +132,126 @@
 
             <!-- Khối nhập văn bản -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp">
+
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayout"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"
+                    android:layout_height="wrap_content"
+                    app:boxStrokeWidth="0dp"
+                    app:boxStrokeWidthFocused="0dp"
                     android:hint="Dán hoặc nhập văn bản vào đây...">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editText"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="200dp"
                         android:gravity="top"
+                        android:background="@android:color/transparent"
                         android:inputType="textMultiLine"
-                        android:scrollbars="vertical"/>
+                        android:scrollbars="vertical" />
                 </com.google.android.material.textfield.TextInputLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Khối chọn giọng đọc -->
+            <!-- Khối tùy chỉnh giọng đọc -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardVoiceSelection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Giao diện chọn giọng đọc tiếng Việt được nâng cấp -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/vietnameseVoiceLayout"
+                        android:id="@+id/voiceSelectorLayout"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Giọng đọc Tiếng Việt">
+                        android:hint="Chọn giọng đọc">
+
                         <AutoCompleteTextView
-                            android:id="@+id/vietnameseVoiceAutoComplete"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none"
-                            tools:text="Nữ miền Nam"/>
+                            android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Tốc độ đọc"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_vertical">
+                        <SeekBar
+                            android:id="@+id/speedSlider"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:max="100"
+                            android:progress="50" />
+                        <TextView
+                            android:id="@+id/speedValueText"
+                            android:layout_width="48dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            tools:text="1.00x"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Độ cao giọng đọc"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_vertical">
+
+                        <SeekBar
+                            android:id="@+id/pitchSlider"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:max="100"
+                            android:progress="50" />
+                        <TextView
+                            android:id="@+id/pitchValueText"
+                            android:layout_width="48dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            tools:text="1.00x"/>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Copyright -->
             <TextView
-                android:id="@+id/copyrightText"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="24dp"
                 android:text="© 2025 by Nguyễn Duy Trường"
+                android:gravity="center"
+                android:layout_marginTop="24dp"
                 android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                android:textColor="?attr/colorOnSurfaceVariant"/>
+
         </LinearLayout>
     </ScrollView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
 

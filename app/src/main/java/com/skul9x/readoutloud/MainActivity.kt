@@ -1,7 +1,6 @@
 package com.skul9x.readoutloud
 
 import android.Manifest
-import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -12,7 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
+import android.text.method.ScrollingMovementMethod
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -24,17 +26,18 @@ import kotlin.math.roundToInt
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var ttsForDiscovery: TextToSpeech
-    private var vietnameseVoices = listOf<Voice>()
-    private var voiceDisplayNames = listOf<String>()
-    private var selectedVoice: Voice? = null
-
+    private lateinit var tts: TextToSpeech
     private lateinit var audioManager: AudioManager
-    private lateinit var prefs: SharedPreferences
+    private lateinit var sharedPreferences: SharedPreferences
+
+    private var vietnameseVoices = listOf<Voice>()
+    private var selectedVoiceName: String? = null
 
     companion object {
         private const val PREFS_NAME = "ReadOutLoudPrefs"
-        private const val KEY_LAST_VOICE_NAME = "last_used_voice_name"
+        private const val KEY_VOICE_NAME = "lastVoiceName"
+        private const val KEY_SPEED = "lastSpeed"
+        private const val KEY_PITCH = "lastPitch"
     }
 
     private val requestPermissionLauncher =
@@ -42,7 +45,7 @@ class MainActivity : AppCompatActivity() {
             if (isGranted) {
                 startReading()
             } else {
-                Toast.makeText(this, "Cần cấp quyền thông báo để đọc trong nền", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Cần cấp quyền thông báo để chạy nền", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -51,23 +54,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         setupUI()
-        setSystemVolume(0.80f)
-        binding.volumeToggleGroup.check(R.id.volumeButton80)
-
         initializeTtsForVoiceDiscovery()
+        setInitialSystemVolume()
     }
 
     private fun setupUI() {
-        // Main controls
         binding.pasteButton.setOnClickListener { pasteFromClipboard() }
         binding.readButton.setOnClickListener { checkPermissionsAndRead() }
         binding.stopButton.setOnClickListener { stopReading() }
 
-        // System Volume controls
+        binding.editText.movementMethod = ScrollingMovementMethod()
+
         binding.volumeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 val percentage = when (checkedId) {
@@ -79,108 +80,103 @@ class MainActivity : AppCompatActivity() {
                 setSystemVolume(percentage)
             }
         }
-    }
 
-    private fun setSystemVolume(percentage: Float) {
-        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val targetVolume = (maxVolume * percentage).roundToInt()
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+        val settingsUpdateListener = object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                updateSpeedAndPitchLabels()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                saveSettings()
+                updateServiceSettings()
+            }
+        }
+        binding.speedSlider.setOnSeekBarChangeListener(settingsUpdateListener)
+        binding.pitchSlider.setOnSeekBarChangeListener(settingsUpdateListener)
+
+        loadSettings()
     }
 
     private fun initializeTtsForVoiceDiscovery() {
-        ttsForDiscovery = TextToSpeech(this) { status ->
+        tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                vietnameseVoices = ttsForDiscovery.voices
-                    .filter { it.locale == Locale("vi", "VN") }
-                    .sortedBy { it.name } // Sắp xếp để đảm bảo thứ tự nhất quán
-
+                vietnameseVoices = tts.voices.filter { it.locale == Locale("vi", "VN") }
                 if (vietnameseVoices.isNotEmpty()) {
-                    voiceDisplayNames = vietnameseVoices.map { formatVoiceName(it.name) }
-                    val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, voiceDisplayNames)
-                    binding.vietnameseVoiceAutoComplete.setAdapter(adapter)
+                    val voiceDisplayNames = vietnameseVoices.map { formatVoiceName(it.name) }
+                    val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, voiceDisplayNames)
+                    (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setAdapter(adapter)
 
-                    // Khôi phục giọng đọc đã lưu
-                    val lastVoiceName = prefs.getString(KEY_LAST_VOICE_NAME, null)
-                    val lastVoiceIndex = vietnameseVoices.indexOfFirst { it.name == lastVoiceName }
+                    val lastVoiceName = sharedPreferences.getString(KEY_VOICE_NAME, null)
+                    val lastVoiceIndex = vietnameseVoices.indexOfFirst { it.name == lastVoiceName }.coerceAtLeast(0)
+                    selectedVoiceName = vietnameseVoices[lastVoiceIndex].name
+                    (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setText(adapter.getItem(lastVoiceIndex), false)
 
-                    val defaultIndex = if (lastVoiceIndex != -1) lastVoiceIndex else 0
-                    selectedVoice = vietnameseVoices[defaultIndex]
-                    binding.vietnameseVoiceAutoComplete.setText(voiceDisplayNames[defaultIndex], false)
-
-                    // Bắt sự kiện chọn giọng đọc mới
-                    binding.vietnameseVoiceAutoComplete.setOnItemClickListener { _, _, position, _ ->
-                        selectedVoice = vietnameseVoices[position]
-                        // Lưu lựa chọn mới
-                        prefs.edit().putString(KEY_LAST_VOICE_NAME, selectedVoice?.name).apply()
-                    }
+                } else {
+                    Toast.makeText(this, "Không tìm thấy giọng đọc Tiếng Việt", Toast.LENGTH_LONG).show()
                 }
             }
+        }
+
+        (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setOnItemClickListener { _, _, position, _ ->
+            selectedVoiceName = vietnameseVoices[position].name
+            saveSettings()
         }
     }
 
     private fun formatVoiceName(voiceName: String): String {
-        return voiceName.replace("vi-vn-", "").replace("-", " ").split("#")[0]
+        return voiceName.replace(Regex("vi-vn-x-v(.)[a-z]-local"), "Giọng \\1").split("#")[0]
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-            .let {
-                val gender = voiceName.substringAfter("#").substringBefore("_")
-                val type = if (voiceName.contains("network")) " (Mạng)" else ""
-                "$it ($gender)$type"
-            }
-    }
-
-    private fun cleanMarkdown(text: String): String {
-        return text
-            .replace(Regex("^#{1,6}\\s+", RegexOption.MULTILINE), "")
-            .replace(Regex("\\[(.*?)\\]\\(.*?\\)"), "$1")
-            .replace(Regex("!\\[(.*?)\\]\\(.*?\\)"), "$1")
-            .replace(Regex("(\\*\\*|\\*|__|_|~~)"), "")
-            .replace(Regex("^>\\s?", RegexOption.MULTILINE), "")
-            .replace(Regex("^\\s*([-*+]|\\d+\\.)\\s+", RegexOption.MULTILINE), "")
-            .replace(Regex("^[\\-_*]{3,}\\s*$", RegexOption.MULTILINE), "")
-            .replace(Regex("`"), "")
-            .trim()
     }
 
     private fun pasteFromClipboard() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         if (clipboard.hasPrimaryClip()) {
             val textToPaste = clipboard.primaryClip?.getItemAt(0)?.text.toString()
-            binding.editText.setText(cleanMarkdown(textToPaste))
-            Toast.makeText(this, "Đã dán và làm sạch văn bản", Toast.LENGTH_SHORT).show()
+            binding.editText.setText(textToPaste)
+            Toast.makeText(this, "Đã dán văn bản", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Không có gì trong clipboard", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun checkPermissionsAndRead() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                PackageManager.PERMISSION_GRANTED -> startReading()
-                else -> requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
             }
-        } else {
-            startReading()
         }
+        startReading()
     }
 
     private fun startReading() {
-        val rawText = binding.editText.text.toString()
-        if (rawText.isBlank()) {
+        val text = binding.editText.text.toString()
+        if (text.isBlank()) {
             Toast.makeText(this, "Vui lòng nhập văn bản", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val cleanedText = cleanMarkdown(rawText)
         val intent = Intent(this, TtsService::class.java).apply {
             action = TtsService.ACTION_START
-            putExtra(TtsService.EXTRA_TEXT, cleanedText)
-            // Luôn gửi thông tin giọng đọc tiếng Việt
-            putExtra(TtsService.EXTRA_LANG, "vi-VN")
-            selectedVoice?.let { putExtra(TtsService.EXTRA_VOICE_NAME, it.name) }
+            putExtra(TtsService.EXTRA_TEXT, text)
+            putExtra(TtsService.EXTRA_VOICE_NAME, selectedVoiceName)
+            putExtra(TtsService.EXTRA_SPEED, binding.speedSlider.progress / 50f)
+            putExtra(TtsService.EXTRA_PITCH, binding.pitchSlider.progress / 50f)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {
             startService(intent)
         }
+    }
+
+    private fun updateServiceSettings() {
+        val intent = Intent(this, TtsService::class.java).apply {
+            action = TtsService.ACTION_UPDATE_SETTINGS
+            putExtra(TtsService.EXTRA_SPEED, binding.speedSlider.progress / 50f)
+            putExtra(TtsService.EXTRA_PITCH, binding.pitchSlider.progress / 50f)
+        }
+        startService(intent)
     }
 
     private fun stopReading() {
@@ -190,10 +186,44 @@ class MainActivity : AppCompatActivity() {
         startService(intent)
     }
 
+    private fun setInitialSystemVolume() {
+        binding.volumeToggleGroup.check(R.id.volumeButton80)
+        setSystemVolume(0.80f)
+    }
+
+    private fun setSystemVolume(percentage: Float) {
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val targetVolume = (maxVolume * percentage).roundToInt()
+        try {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+        } catch (e: SecurityException) {
+            Toast.makeText(this, "Không có quyền thay đổi âm lượng", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun saveSettings() {
+        with(sharedPreferences.edit()) {
+            putString(KEY_VOICE_NAME, selectedVoiceName)
+            putInt(KEY_SPEED, binding.speedSlider.progress)
+            putInt(KEY_PITCH, binding.pitchSlider.progress)
+            apply()
+        }
+    }
+
+    private fun loadSettings() {
+        binding.speedSlider.progress = sharedPreferences.getInt(KEY_SPEED, 50)
+        binding.pitchSlider.progress = sharedPreferences.getInt(KEY_PITCH, 50)
+        updateSpeedAndPitchLabels()
+    }
+
+    private fun updateSpeedAndPitchLabels() {
+        binding.speedValueText.text = String.format("%.2fx", binding.speedSlider.progress / 50f)
+        binding.pitchValueText.text = String.format("%.2fx", binding.pitchSlider.progress / 50f)
+    }
+
     override fun onDestroy() {
-        if (this::ttsForDiscovery.isInitialized) {
-            ttsForDiscovery.stop()
-            ttsForDiscovery.shutdown()
+        if (::tts.isInitialized) {
+            tts.shutdown()
         }
         super.onDestroy()
     }
