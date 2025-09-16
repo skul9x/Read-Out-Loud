@@ -14,7 +14,6 @@ import android.speech.tts.Voice
 import android.text.method.ScrollingMovementMethod
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -32,12 +31,12 @@ class MainActivity : AppCompatActivity() {
 
     private var vietnameseVoices = listOf<Voice>()
     private var selectedVoiceName: String? = null
+    private val voiceDisplayNames = mutableListOf<String>()
+    private val voiceMap = mutableMapOf<String, String>()
 
     companion object {
         private const val PREFS_NAME = "ReadOutLoudPrefs"
         private const val KEY_VOICE_NAME = "lastVoiceName"
-        private const val KEY_SPEED = "lastSpeed"
-        private const val KEY_PITCH = "lastPitch"
     }
 
     private val requestPermissionLauncher =
@@ -53,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         binding.readButton.setOnClickListener { checkPermissionsAndRead() }
         binding.stopButton.setOnClickListener { stopReading() }
 
-        binding.editText.movementMethod = ScrollingMovementMethod()
+        binding.editText.movementMethod = ScrollingMovementMethod.getInstance()
 
         binding.volumeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
@@ -75,65 +75,71 @@ class MainActivity : AppCompatActivity() {
                     R.id.volumeButton80 -> 0.80f
                     R.id.volumeButton85 -> 0.85f
                     R.id.volumeButton90 -> 0.90f
-                    else -> 0.80f
+                    else -> 0.80f // Mặc định
                 }
                 setSystemVolume(percentage)
             }
         }
-
-        val settingsUpdateListener = object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                updateSpeedAndPitchLabels()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                saveSettings()
-                updateServiceSettings()
-            }
-        }
-        binding.speedSlider.setOnSeekBarChangeListener(settingsUpdateListener)
-        binding.pitchSlider.setOnSeekBarChangeListener(settingsUpdateListener)
-
-        loadSettings()
     }
 
     private fun initializeTtsForVoiceDiscovery() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                vietnameseVoices = tts.voices.filter { it.locale == Locale("vi", "VN") }
+                vietnameseVoices = tts.voices
+                    .filter { it.locale == Locale("vi", "VN") && !it.isNetworkConnectionRequired }
+                    .distinctBy { it.name }
+
                 if (vietnameseVoices.isNotEmpty()) {
-                    val voiceDisplayNames = vietnameseVoices.map { formatVoiceName(it.name) }
-                    val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, voiceDisplayNames)
-                    (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setAdapter(adapter)
-
-                    val lastVoiceName = sharedPreferences.getString(KEY_VOICE_NAME, null)
-                    val lastVoiceIndex = vietnameseVoices.indexOfFirst { it.name == lastVoiceName }.coerceAtLeast(0)
-                    selectedVoiceName = vietnameseVoices[lastVoiceIndex].name
-                    (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setText(adapter.getItem(lastVoiceIndex), false)
-
+                    populateVoiceSelector()
                 } else {
                     Toast.makeText(this, "Không tìm thấy giọng đọc Tiếng Việt", Toast.LENGTH_LONG).show()
                 }
+            } else {
+                Toast.makeText(this, "Không thể khởi tạo Text-to-Speech", Toast.LENGTH_LONG).show()
             }
-        }
-
-        (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)?.setOnItemClickListener { _, _, position, _ ->
-            selectedVoiceName = vietnameseVoices[position].name
-            saveSettings()
         }
     }
 
-    private fun formatVoiceName(voiceName: String): String {
-        return voiceName.replace(Regex("vi-vn-x-v(.)[a-z]-local"), "Giọng \\1").split("#")[0]
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+    private fun populateVoiceSelector() {
+        // Clear previous data to avoid duplication
+        voiceDisplayNames.clear()
+        voiceMap.clear()
+
+        vietnameseVoices.forEachIndexed { index, voice ->
+            val displayName = "Giọng đọc ${index + 1}"
+            voiceDisplayNames.add(displayName)
+            voiceMap[displayName] = voice.name
+        }
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, voiceDisplayNames)
+        val autoCompleteTextView = (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)
+        autoCompleteTextView?.setAdapter(adapter)
+
+        val lastVoiceName = sharedPreferences.getString(KEY_VOICE_NAME, null)
+        val lastDisplayName = voiceMap.entries.find { it.value == lastVoiceName }?.key
+
+        if (lastDisplayName != null) {
+            autoCompleteTextView?.setText(lastDisplayName, false)
+            selectedVoiceName = lastVoiceName
+        } else if (voiceDisplayNames.isNotEmpty()) {
+            autoCompleteTextView?.setText(voiceDisplayNames[0], false)
+            selectedVoiceName = voiceMap[voiceDisplayNames[0]]
+        }
+
+        autoCompleteTextView?.setOnItemClickListener { _, _, position, _ ->
+            val displayName = adapter.getItem(position) ?: return@setOnItemClickListener
+            selectedVoiceName = voiceMap[displayName]
+            saveSettings()
+        }
     }
 
     private fun pasteFromClipboard() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         if (clipboard.hasPrimaryClip()) {
             val textToPaste = clipboard.primaryClip?.getItemAt(0)?.text.toString()
-            binding.editText.setText(textToPaste)
-            Toast.makeText(this, "Đã dán văn bản", Toast.LENGTH_SHORT).show()
+            val plainText = textToPaste.replace(Regex("[*#_`~]"), "")
+            binding.editText.setText(plainText)
+            Toast.makeText(this, "Đã dán và lọc văn bản", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Không có gì trong clipboard", Toast.LENGTH_SHORT).show()
         }
@@ -160,23 +166,12 @@ class MainActivity : AppCompatActivity() {
             action = TtsService.ACTION_START
             putExtra(TtsService.EXTRA_TEXT, text)
             putExtra(TtsService.EXTRA_VOICE_NAME, selectedVoiceName)
-            putExtra(TtsService.EXTRA_SPEED, binding.speedSlider.progress / 50f)
-            putExtra(TtsService.EXTRA_PITCH, binding.pitchSlider.progress / 50f)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {
             startService(intent)
         }
-    }
-
-    private fun updateServiceSettings() {
-        val intent = Intent(this, TtsService::class.java).apply {
-            action = TtsService.ACTION_UPDATE_SETTINGS
-            putExtra(TtsService.EXTRA_SPEED, binding.speedSlider.progress / 50f)
-            putExtra(TtsService.EXTRA_PITCH, binding.pitchSlider.progress / 50f)
-        }
-        startService(intent)
     }
 
     private fun stopReading() {
@@ -204,21 +199,8 @@ class MainActivity : AppCompatActivity() {
     private fun saveSettings() {
         with(sharedPreferences.edit()) {
             putString(KEY_VOICE_NAME, selectedVoiceName)
-            putInt(KEY_SPEED, binding.speedSlider.progress)
-            putInt(KEY_PITCH, binding.pitchSlider.progress)
             apply()
         }
-    }
-
-    private fun loadSettings() {
-        binding.speedSlider.progress = sharedPreferences.getInt(KEY_SPEED, 50)
-        binding.pitchSlider.progress = sharedPreferences.getInt(KEY_PITCH, 50)
-        updateSpeedAndPitchLabels()
-    }
-
-    private fun updateSpeedAndPitchLabels() {
-        binding.speedValueText.text = String.format("%.2fx", binding.speedSlider.progress / 50f)
-        binding.pitchValueText.text = String.format("%.2fx", binding.pitchSlider.progress / 50f)
     }
 
     override fun onDestroy() {
@@ -228,3 +210,4 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
+

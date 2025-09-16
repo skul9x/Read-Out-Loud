@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
@@ -19,22 +18,26 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     private lateinit var tts: TextToSpeech
     private var isTtsInitialized = false
 
+    // Biến để lưu yêu cầu đọc trong khi chờ TTS khởi tạo
+    private var pendingTextToSpeak: String? = null
+    private var pendingVoiceNameToUse: String? = null
+
+    private var lastUtteranceId: String? = null
+
     companion object {
         const val CHANNEL_ID = "TtsServiceChannel"
         const val NOTIFICATION_ID = 1
 
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
-        const val ACTION_UPDATE_SETTINGS = "ACTION_UPDATE_SETTINGS"
 
         const val EXTRA_TEXT = "EXTRA_TEXT"
         const val EXTRA_VOICE_NAME = "EXTRA_VOICE_NAME"
-        const val EXTRA_SPEED = "EXTRA_SPEED"
-        const val EXTRA_PITCH = "EXTRA_PITCH"
     }
 
     override fun onCreate() {
         super.onCreate()
+        // Khởi tạo TTS, callback sẽ được gọi trong onInit
         tts = TextToSpeech(this, this)
     }
 
@@ -42,7 +45,6 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         when (intent?.action) {
             ACTION_START -> handleStart(intent)
             ACTION_STOP -> stopReadingAndService()
-            ACTION_UPDATE_SETTINGS -> handleUpdateSettings(intent)
         }
         return START_NOT_STICKY
     }
@@ -52,45 +54,56 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             isTtsInitialized = true
             tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
+
                 override fun onDone(utteranceId: String?) {
-                    // Kiểm tra xem đây có phải là đoạn cuối cùng không
-                    if (utteranceId?.startsWith("chunk_") == true) {
-                        val parts = utteranceId.split("_")
-                        if (parts.size == 3) {
-                            val currentIndex = parts[1].toInt()
-                            val totalChunks = parts[2].toInt()
-                            if (currentIndex >= totalChunks - 1) {
-                                stopReadingAndService()
-                            }
-                        }
+                    if (utteranceId == lastUtteranceId) {
+                        stopReadingAndService()
                     }
                 }
+
+                @Deprecated("Deprecated in Java")
                 override fun onError(utteranceId: String?) {
                     stopReadingAndService()
                 }
             })
+
+            // Sau khi khởi tạo thành công, kiểm tra xem có yêu cầu nào đang chờ không
+            pendingTextToSpeak?.let { text ->
+                handlePendingRequest(text, pendingVoiceNameToUse)
+            }
         } else {
             stopSelf()
         }
     }
 
     private fun handleStart(intent: Intent) {
-        if (!isTtsInitialized) return
-
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
+        val voiceName = intent.getStringExtra(EXTRA_VOICE_NAME)
+
         if (text.isBlank()) {
             stopReadingAndService()
             return
         }
 
-        val voiceName = intent.getStringExtra(EXTRA_VOICE_NAME)
-        val speed = intent.getFloatExtra(EXTRA_SPEED, 1.0f)
-        val pitch = intent.getFloatExtra(EXTRA_PITCH, 1.0f)
+        if (isTtsInitialized) {
+            // Nếu TTS đã sẵn sàng, thực hiện đọc ngay lập tức
+            executeReading(text, voiceName)
+        } else {
+            // Nếu TTS chưa sẵn sàng, lưu lại yêu cầu để xử lý sau trong onInit
+            pendingTextToSpeak = text
+            pendingVoiceNameToUse = voiceName
+        }
+    }
 
+    private fun handlePendingRequest(text: String, voiceName: String?) {
+        executeReading(text, voiceName)
+        // Xóa yêu cầu đã lưu sau khi thực hiện
+        pendingTextToSpeak = null
+        pendingVoiceNameToUse = null
+    }
+
+    private fun executeReading(text: String, voiceName: String?) {
         tts.language = Locale("vi", "VN")
-        tts.setSpeechRate(speed)
-        tts.setPitch(pitch)
-
         voiceName?.let { name ->
             val voice = tts.voices.find { it.name == name }
             tts.voice = voice ?: tts.defaultVoice
@@ -100,36 +113,35 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         speakText(text)
     }
 
-    private fun handleUpdateSettings(intent: Intent) {
-        if (isTtsInitialized && tts.isSpeaking) {
-            val speed = intent.getFloatExtra(EXTRA_SPEED, 1.0f)
-            val pitch = intent.getFloatExtra(EXTRA_PITCH, 1.0f)
-            tts.setSpeechRate(speed)
-            tts.setPitch(pitch)
-        }
-    }
-
     private fun speakText(text: String) {
         val chunks = splitTextForTts(text)
-        // Dừng lần đọc trước đó trước khi bắt đầu lần mới
+        if (chunks.isEmpty()) {
+            stopReadingAndService()
+            return
+        }
+
+        lastUtteranceId = "chunk_${chunks.size - 1}"
         tts.stop()
+
         for ((index, chunk) in chunks.withIndex()) {
-            val utteranceId = "chunk_${index}_${chunks.size}"
+            val utteranceId = "chunk_$index"
             tts.speak(chunk, TextToSpeech.QUEUE_ADD, null, utteranceId)
         }
     }
 
     private fun splitTextForTts(text: String): List<String> {
-        val maxLength = TextToSpeech.getMaxSpeechInputLength() - 1
+        val maxLength = 3900
         if (text.length <= maxLength) return listOf(text)
+
         val chunks = mutableListOf<String>()
         var index = 0
         while (index < text.length) {
             var endIndex = (index + maxLength).coerceAtMost(text.length)
-            // Cố gắng ngắt câu tại dấu chấm câu để tự nhiên hơn
-            val sentenceEnd = text.lastIndexOfAny(charArrayOf('.', '!', '?'), endIndex)
-            if (sentenceEnd > index) {
-                endIndex = sentenceEnd + 1
+            if (endIndex < text.length) {
+                val lastPunctuation = text.lastIndexOfAny(charArrayOf('.', '!', '?'), endIndex)
+                if (lastPunctuation > index) {
+                    endIndex = lastPunctuation + 1
+                }
             }
             chunks.add(text.substring(index, endIndex))
             index = endIndex
@@ -150,10 +162,10 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
             .setContentText("Đang đọc văn bản...")
-            .setSmallIcon(android.R.drawable.ic_btn_speak_now) // Sử dụng icon mặc định của hệ thống
+            .setSmallIcon(R.drawable.ic_play_arrow)
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
-            .addAction(0, "Dừng", stopPendingIntent)
+            .addAction(R.drawable.ic_stop, "Dừng", stopPendingIntent)
             .build()
     }
 
@@ -181,3 +193,4 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 }
+
