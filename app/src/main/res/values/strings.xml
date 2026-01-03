@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">Read Out Loud</string>
+    <string name="copyright_text">Copyright 2025 by skul9x</string>
+    
+    <!-- Button labels -->
+    <string name="btn_paste">Dán</string>
+    <string name="btn_read">Đọc</string>
+    <string name="btn_stop">Dừng</string>
+    
+    <!-- Volume buttons -->
+    <string name="volume_80">80%</string>
+    <string name="volume_85">85%</string>
+    <string name="volume_90">90%</string>
+    
+    <!-- Accessibility descriptions -->
+    <string name="volume_80_desc">Đặt âm lượng 80 phần trăm</string>
+    <string name="volume_85_desc">Đặt âm lượng 85 phần trăm</string>
+    <string name="volume_90_desc">Đặt âm lượng 90 phần trăm</string>
+    
+    <!-- Hints -->
+    <string name="hint_input_text">Nhập hoặc dán văn bản tại đây…</string>
+    <string name="hint_select_voice">Chọn giọng đọc</string>
+    
+    <!-- Toast messages -->
+    <string name="msg_permission_required">Cần cấp quyền thông báo để chạy nền</string>
+    <string name="msg_no_vietnamese_voice">Không tìm thấy giọng đọc Tiếng Việt</string>
+    <string name="msg_tts_init_failed">Không thể khởi tạo Text-to-Speech</string>
+    <string name="msg_pasted_filtered">Đã dán và lọc văn bản</string>
+    <string name="msg_clipboard_empty">Không có gì trong clipboard</string>
+    <string name="msg_enter_text">Vui lòng nhập văn bản</string>
+    <string name="msg_no_volume_permission">Không có quyền thay đổi âm lượng</string>
+    <string name="msg_preparing_tts">Đang chuẩn bị đọc…</string>
+    <string name="msg_tts_not_ready">Đang khởi tạo, vui lòng chờ…</string>
+    <string name="msg_tts_service_error">Lỗi dịch vụ đọc văn bản</string>
+    <string name="msg_text_processing_error">Lỗi xử lý văn bản</string>
+    
+    <!-- Voice selector -->
+    <string name="voice_name_format">Giọng đọc %d</string>
+    
+    <!-- Notification -->
+    <string name="notification_reading">Đang đọc văn bản…</string>
+    <string name="notification_channel_name">Kênh dịch vụ đọc</string>
+    <string name="title_edit_text">Edit Text</string>
+    <string name="btn_save">SAVE</string>
+</resources>
