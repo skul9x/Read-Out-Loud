@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -13,28 +13,33 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- Material 3 Toolbar -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/black">
+            android:background="?attr/colorSurface"
+            app:elevation="0dp">
 
-            <!-- Volume Button (Left) -->
+            <!-- Volume Button (Left) - Styled as Tonal for visibility -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/volumeButton"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="8dp"
                 android:minWidth="48dp"
-                android:padding="0dp"
+                android:padding="8dp"
                 android:text="80%"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_volume_up"
+                app:iconSize="18dp"
+                app:iconGravity="textStart" />
 
-            <!-- Centered Title -->
+            <!-- Centered M3 Title -->
             <TextView
                 android:id="@+id/toolbarTitle"
                 android:layout_width="wrap_content"
@@ -42,10 +47,9 @@
                 android:layout_gravity="center"
                 android:text="READ-OUT-LOUD"
                 android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:letterSpacing="0.05" />
 
             <!-- Settings Button (Right) -->
             <ImageButton
@@ -53,81 +57,56 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_settings"
-                app:tint="@color/white" />
+                app:tint="?attr/colorOnSurface" />
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <!-- Gemini AI Toggle Card -->
+        <!-- AI Text Button Card (M3 Elevated) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="16dp"
-            app:cardBackgroundColor="@color/card_bg"
-            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer"
+            app:cardCornerRadius="28dp"
             app:strokeWidth="0dp">
 
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/aiTextButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="GEMINI AI READ"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="@color/white"
-                    android:textStyle="bold" />
-
-                <!-- Polish Button Added -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/polishButton"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="POLISH"
-                    android:textColor="@color/gemini_blue"
-                    android:textStyle="bold"
-                    android:visibility="visible"
-                    app:icon="@drawable/ic_auto_fix"
-                    app:iconTint="@color/gemini_blue" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/geminiToggle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:thumbTint="@color/white"
-                    app:trackTint="@color/gemini_blue" />
-            </LinearLayout>
+                android:layout_height="64dp"
+                android:text="AI text"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_auto_fix"
+                app:iconGravity="textStart"
+                app:iconSize="24dp"
+                app:cornerRadius="24dp" />
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Controls Cluster (Moved Up as per request) -->
+        <!-- Main Action Grid -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="8dp"
             android:orientation="horizontal">
 
+            <!-- Paste Button -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/pasteCard"
+                style="?attr/materialCardViewFilledStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="1"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                app:cardCornerRadius="20dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -135,70 +114,34 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_paste"
-                        app:tint="@color/white" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="6dp"
                         android:text="PASTE"
-                        android:textColor="@color/white"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Read Button (Primary Action) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/readCard"
+                style="?attr/materialCardViewFilledStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="1.2"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="16dp"
-                app:strokeColor="@color/gemini_blue"
-                app:strokeWidth="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_play_arrow"
-                        app:tint="@color/gemini_blue" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="READ"
-                        android:textColor="@color/gemini_blue"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/stopCard"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:layout_weight="1"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                app:cardCornerRadius="24dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -206,41 +149,78 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_play_arrow"
+                        app:tint="?attr/colorOnPrimaryContainer" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="READ"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textColor="?attr/colorOnPrimaryContainer"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Stop Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/stopCard"
+                style="?attr/materialCardViewFilledStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                app:cardCornerRadius="20dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_stop"
-                        app:tint="@color/white" />
+                        app:tint="?attr/colorOnSurface" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="6dp"
                         android:text="STOP"
-                        android:textColor="@color/white"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Main Text Input Card -->
+        <!-- Main Workspace (Text Input) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_margin="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
             android:layout_weight="1"
-            app:cardBackgroundColor="@color/black"
-            app:cardCornerRadius="24dp"
-            app:strokeColor="#33FFFFFF"
-            app:strokeWidth="1dp">
+            app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+            app:cardCornerRadius="28dp"
+            app:strokeWidth="0dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:hint="Paste your text here or type something..."
-                android:textColorHint="#88FFFFFF"
+                android:hint="Paste your text here to read aloud..."
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="0dp"
                 app:hintEnabled="true">
@@ -252,73 +232,137 @@
                     android:background="@android:color/transparent"
                     android:gravity="top"
                     android:inputType="textMultiLine"
-                    android:overScrollMode="always"
-                    android:padding="20dp"
+                    android:padding="24dp"
                     android:scrollbars="vertical"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:lineSpacingExtra="4dp" />
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/statusText"
+        <!-- Reading Progress Area (M3) -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#11FFFFFF"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="Ready"
-            android:textColor="#88FFFFFF"
-            android:textSize="12sp" />
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer"
+            app:cardCornerRadius="20dp"
+            app:strokeWidth="0dp">
 
-        <!-- Copyright Text -->
-        <TextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/readingStatusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="Reading Progress"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/readingPercentText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="0%"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textColor="?attr/colorPrimary"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/readingProgressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:progress="0"
+                    app:indicatorColor="?attr/colorPrimary"
+                    app:trackColor="?attr/colorSurfaceVariant"
+                    app:trackCornerRadius="4dp"
+                    app:trackThickness="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Small Status & Footer -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="Copyright 2026 Nguyễn Duy Trường"
-            android:textColor="#44FFFFFF"
-            android:textSize="10sp" />
+            android:orientation="vertical"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Ready"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center"
+                android:text="Copyright 2026 Nguyễn Duy Trường"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                android:textColor="?attr/colorOutlineVariant"
+                android:alpha="0.6" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Glassmorphism Loading Overlay -->
+    <!-- Loading Overlay (Gemini Processing) -->
     <FrameLayout
         android:id="@+id/loadingOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#CC000000"
+        android:background="#AA000000"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:background="@drawable/glass_bg"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="32dp">
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="8dp">
 
-            <com.google.android.material.progressindicator.CircularProgressIndicator
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:indeterminate="true"
-                app:indicatorColor="@color/gemini_blue"
-                app:indicatorSize="64dp"
-                app:trackColor="#33FFFFFF"
-                app:trackThickness="6dp" />
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="32dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Gemini đang xử lý..."
-                android:textColor="@color/white"
-                android:textStyle="bold" />
-        </LinearLayout>
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    app:indicatorSize="48dp"
+                    app:trackThickness="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Gemini đang xử lý..."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 
 </FrameLayout>
-

@@ -1,31 +1,33 @@
 {
-  "updated_at": "2026-03-19T12:25:00Z",
+  "updated_at": "2026-03-19T13:45:00Z",
   "working_on": {
-    "feature": "UI & Audio Enhancements",
-    "task": "Final Verification & Handover",
-    "status": "Complete",
+    "feature": "Material 3 UI & Reading Progress",
+    "task": "Completed M3 UI Revamp and Progress Logic",
+    "status": "Finalizing",
     "files": [
       "app/src/main/java/com/skul9x/readoutloud/MainActivity.kt",
+      "app/src/main/java/com/skul9x/readoutloud/TtsService.kt",
       "app/src/main/res/layout/activity_main.xml",
-      "app/src/main/java/com/skul9x/readoutloud/ui/SettingsActivity.kt",
-      "app/src/main/res/layout/activity_settings.xml"
+      "app/src/main/res/layout/activity_settings.xml",
+      "app/src/main/res/values/colors.xml",
+      "app/src/main/res/values/themes.xml"
     ],
     "blockers": [],
-    "notes": "Toolbar Title overlap fixed with custom TextView. Volume cycling logic implemented (80-85-90). TTS voice selection added to Settings."
+    "notes": "Full visual upgrade to Material 3. Implemented absolute progress tracking in TtsService using onRangeStart. Connected to MainActivity via LocalBroadcast (ACTION_PROGRESS). Verified build SUCCESS."
   },
   "pending_tasks": [
-    { "task": "Check for edge cases in TTS voice loading on older devices", "priority": "low" },
-    { "task": "Add unit tests for Volume Cycle logic", "priority": "medium" }
+    { "task": "Test progress tracking with extremely long texts (>10k chars)", "priority": "medium" },
+    { "task": "Optimize TTS chunking to avoid punctuation splits in middle of progress broadcast", "priority": "low" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-03-19T12:15:00Z", "type": "ui-fix", "description": "Fix missing toolbar title and overlap issue using centered TextView", "files": ["activity_main.xml"] },
-    { "timestamp": "2026-03-19T11:43:00Z", "type": "feature", "description": "Implement UI & Audio Enhancements (Volume cycle, TTS select)", "files": ["MainActivity.kt", "SettingsActivity.kt", "activity_main.xml", "activity_settings.xml"] }
+    { "timestamp": "2026-03-19T13:30:00Z", "type": "ui-refactor", "description": "Material 3 Migration: Dark theme, cards, and buttons updated to M3 standards.", "files": ["activity_main.xml", "colors.xml", "themes.xml"] },
+    { "timestamp": "2026-03-19T13:40:00Z", "type": "feature", "description": "Reading Progress: Added LinearProgressIndicator and logic to track TTS position.", "files": ["MainActivity.kt", "TtsService.kt"] }
   ],
   "errors_encountered": [
-    { "error": "MaterialToolbar title hidden by custom children", "solution": "Use custom TextView with layout_gravity='center' instead of app:title", "resolved": true }
+    { "error": "Missing ic_volume_up and incorrect M3 style names caused build failure", "solution": "Created vector asset and corrected style to Widget.Material3.Button.TonalButton", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Add Volume Cycle but keep it minimalist", "reason": "User requested 80-85-90 cycle pattern" },
-    { "decision": "Re-enable Volume Controls", "reason": "Explicit user request overrides previous 'Minimalism' strategy" }
+    { "decision": "Absolute Progress Formula", "reason": "CumulativeOffset + CurrentChunkOffset allows tracking progress even when text is split into chunks." },
+    { "decision": "Material 3 Adoption", "reason": "Aligning with modern Android UX standards for premium look and feel." }
   ]
 }

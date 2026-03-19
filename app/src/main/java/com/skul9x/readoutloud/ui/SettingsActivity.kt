@@ -56,7 +56,7 @@ class SettingsActivity : AppCompatActivity() {
             pasteKeysFromClipboard()
         }
 
-        binding.saveCard.setOnClickListener {
+        binding.saveButton.setOnClickListener {
             saveKeys()
         }
     }

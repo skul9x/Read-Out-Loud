@@ -1,8 +1,10 @@
 package com.skul9x.readoutloud
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.IntentFilter
 import android.media.AudioManager
 import android.content.Intent
 import android.content.SharedPreferences
@@ -43,6 +45,15 @@ class MainActivity : AppCompatActivity() {
     private var selectedVoiceName: String? = null
     private var currentVolumePercent = 80
 
+    private val progressReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == TtsService.ACTION_PROGRESS) {
+                val percent = intent.getIntExtra(TtsService.EXTRA_PROGRESS_PERCENT, 0)
+                updateReadingProgress(percent)
+            }
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "ReadOutLoudPrefs"
         private const val KEY_VOICE_NAME = "lastVoiceName"
@@ -78,6 +89,25 @@ class MainActivity : AppCompatActivity() {
         initializeTtsForVoiceDiscovery()
     }
 
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter(TtsService.ACTION_PROGRESS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(progressReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(progressReceiver, filter)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try {
+            unregisterReceiver(progressReceiver)
+        } catch (e: Exception) {
+            // Ignored
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // Reload selected voice preference
@@ -95,26 +125,16 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Gemini Toggle
-        val isGeminiEnabled = sharedPreferences.getBoolean(KEY_GEMINI_ENABLED, false)
-        binding.geminiToggle.isChecked = isGeminiEnabled
-        binding.polishButton.isEnabled = isGeminiEnabled
-        binding.polishButton.alpha = if (isGeminiEnabled) 1.0f else 0.5f
-
-        binding.geminiToggle.setOnCheckedChangeListener { _, isChecked ->
-            sharedPreferences.edit().putBoolean(KEY_GEMINI_ENABLED, isChecked).apply()
-            binding.polishButton.isEnabled = isChecked
-            binding.polishButton.alpha = if (isChecked) 1.0f else 0.5f
-            updateStatus(if (isChecked) "Gemini AI: ON" else "Gemini AI: OFF")
-        }
-
-        // Polish Text Action
-        binding.polishButton.setOnClickListener {
+        // AI Text Action
+        binding.aiTextButton.setOnClickListener {
             val textToPolish = binding.editText.text.toString()
             if (textToPolish.isBlank()) {
                 Toast.makeText(this, "Không có nội dung để dọn dẹp", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            // Tạm thời bật AI Read nếu cần cho logic hệ thống khác
+            sharedPreferences.edit().putBoolean(KEY_GEMINI_ENABLED, true).apply()
+            updateStatus("Gemini AI: ON")
             processWithAI(textToPolish)
         }
 
@@ -194,7 +214,7 @@ class MainActivity : AppCompatActivity() {
         val apiKeys = ApiKeyManager.getInstance(this).getApiKeys()
         if (apiKeys.isEmpty()) {
             Toast.makeText(this, "Chưa cấu hình Gemini API Key", Toast.LENGTH_LONG).show()
-            binding.geminiToggle.isChecked = false
+            updateStatus("Gemini: Không có API Key")
             return
         }
 
@@ -234,18 +254,27 @@ class MainActivity : AppCompatActivity() {
         binding.statusText.text = status
     }
 
+    private fun updateReadingProgress(percent: Int) {
+        binding.readingProgressBar.progress = percent
+        binding.readingPercentText.text = "$percent%"
+        if (percent >= 100) {
+            binding.readingStatusText.text = "Finished"
+        } else if (percent > 0) {
+            binding.readingStatusText.text = "Reading..."
+        }
+    }
+
     private fun setLoading(isLoading: Boolean) {
         binding.pasteCard.isEnabled = !isLoading
         binding.readCard.isEnabled = !isLoading
-        binding.geminiToggle.isEnabled = !isLoading
-        binding.polishButton.isEnabled = !isLoading && binding.geminiToggle.isChecked
+        binding.aiTextButton.isEnabled = !isLoading
         
         binding.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
         
         if (isLoading) {
-            binding.statusText.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
+            binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.md_theme_dark_primary))
         } else {
-            binding.statusText.setBackgroundColor(android.graphics.Color.parseColor("#11FFFFFF"))
+            binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.md_theme_dark_onSurfaceVariant))
         }
     }
 
@@ -286,6 +315,7 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         updateStatus("Đã dừng")
+        updateReadingProgress(0)
     }
 
     override fun onDestroy() {

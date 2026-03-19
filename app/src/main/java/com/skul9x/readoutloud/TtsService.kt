@@ -23,6 +23,8 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     private var pendingVoiceNameToUse: String? = null
 
     private var lastUtteranceId: String? = null
+    private var totalTextLength: Int = 0
+    private var chunkStartOffsets: List<Int> = emptyList()
 
     companion object {
         const val CHANNEL_ID = "TtsServiceChannel"
@@ -30,9 +32,11 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
+        const val ACTION_PROGRESS = "ACTION_PROGRESS"
 
         const val EXTRA_TEXT = "EXTRA_TEXT"
         const val EXTRA_VOICE_NAME = "EXTRA_VOICE_NAME"
+        const val EXTRA_PROGRESS_PERCENT = "EXTRA_PROGRESS_PERCENT"
     }
 
     override fun onCreate() {
@@ -57,7 +61,19 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
                 override fun onDone(utteranceId: String?) {
                     if (utteranceId == lastUtteranceId) {
+                        broadcastProgress(100)
                         stopReadingAndService()
+                    }
+                }
+
+                override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                    utteranceId?.takeIf { it.startsWith("chunk_") }?.let { id ->
+                        val index = id.removePrefix("chunk_").toIntOrNull() ?: 0
+                        if (index < chunkStartOffsets.size && totalTextLength > 0) {
+                            val absoluteStart = chunkStartOffsets[index] + start
+                            val percent = (absoluteStart * 100) / totalTextLength
+                            broadcastProgress(percent.coerceIn(0, 100))
+                        }
                     }
                 }
 
@@ -120,6 +136,15 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
+        totalTextLength = text.length
+        val offsets = mutableListOf<Int>()
+        var currentOffset = 0
+        for (chunk in chunks) {
+            offsets.add(currentOffset)
+            currentOffset += chunk.length
+        }
+        chunkStartOffsets = offsets
+
         lastUtteranceId = "chunk_${chunks.size - 1}"
         tts.stop()
 
@@ -127,6 +152,14 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             val utteranceId = "chunk_$index"
             tts.speak(chunk, TextToSpeech.QUEUE_ADD, null, utteranceId)
         }
+    }
+
+    private fun broadcastProgress(percent: Int) {
+        val intent = Intent(ACTION_PROGRESS).apply {
+            putExtra(EXTRA_PROGRESS_PERCENT, percent)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
     }
 
     private fun splitTextForTts(text: String): List<String> {

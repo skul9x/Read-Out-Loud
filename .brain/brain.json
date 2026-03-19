@@ -3,17 +3,18 @@
   "project": {
     "name": "Read-Out-Loud",
     "type": "Android (Kotlin)",
-    "status": "v1.1.0 - UI & Audio Enhancements Complete"
+    "status": "v1.3.0 - Material 3 UI & Reading Progress Complete"
   },
-    "tech_stack": {
-      "core": "Kotlin, Android SDK (Level 35)",
-      "multimedia": "TextToSpeech, AudioManager",
-      "network": "OkHttp 4.12.0",
-      "serialization": "Kotlinx Serialization JSON 1.6.3",
-      "storage": "EncryptedSharedPreferences (Security Crypto 1.1.0-alpha06)",
-      "concurrency": "Kotlin Coroutines 1.8.1",
-      "testing": "Robolectric 4.14.1, MockK 1.13.12"
-    },
+  "tech_stack": {
+    "core": "Kotlin, Android SDK (Level 35)",
+    "ui_framework": "Material Design 3 (M3)",
+    "multimedia": "TextToSpeech, AudioManager",
+    "network": "OkHttp 4.12.0",
+    "serialization": "Kotlinx Serialization JSON 1.6.3",
+    "storage": "EncryptedSharedPreferences (Security Crypto 1.1.0-alpha06)",
+    "concurrency": "Kotlin Coroutines 1.8.1",
+    "testing": "Robolectric 4.14.1, MockK 1.13.12"
+  },
   "api_endpoints": [
     {
       "provider": "Google Gemini",
@@ -29,22 +30,24 @@
     }
   ],
   "features": [
-    "AI Text Cleaning (Gemini-powered)",
+    "Material 3 (M3) Dark Theme & Premium UI",
+    "Real-time Reading Progress Tracking (0-100%)",
+    "Unified AI Text Cleaning (One-click button)",
     "Secure API Key Rotation (Automatic)",
     "Volume Cycling Interface (80-85-90%)",
-    "Granular TTS Voice Selection (Multiple VN Voices)",
-    "Adaptive Dark Mode UI (Minimalist & Dynamic)"
+    "Granular TTS Voice Selection (Multiple VN Voices)"
   ],
   "knowledge_items": {
     "patterns": [
+      "Material 3 Design Guidelines (Surface Containers, Tonal Buttons)",
+      "TTS Progress Broadcast: Service calculates absolute progress across text chunks",
       "Repository pattern/Data Layer for API/Storage",
-      "Model-First Rotation Strategy for reliability",
-      "Robust Storage Fallback (Encrypted -> Default)"
+      "Model-First Rotation Strategy for reliability"
     ],
     "gotchas": [
-      "Target SDK 35 required for core-ktx 1.16.0",
-      "Kotlin regex escape sequences in strings need raw string or double backslash",
-      "EncryptedSharedPreferences fails on Robolectric/JVM without KeyStore workaround"
+      "onRangeStart callback for TTS requires absolute offset calculation when text is chunked",
+      "Material 3 style names differ slightly (e.g., TonalButton vs FilledTonalButton in older docs)",
+      "DataBinding requires full project rebuild after major layout refactors to sync view IDs"
     ]
   }
 }
