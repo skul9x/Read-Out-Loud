@@ -1,0 +1,31 @@
+{
+  "updated_at": "2026-03-19T12:25:00Z",
+  "working_on": {
+    "feature": "UI & Audio Enhancements",
+    "task": "Final Verification & Handover",
+    "status": "Complete",
+    "files": [
+      "app/src/main/java/com/skul9x/readoutloud/MainActivity.kt",
+      "app/src/main/res/layout/activity_main.xml",
+      "app/src/main/java/com/skul9x/readoutloud/ui/SettingsActivity.kt",
+      "app/src/main/res/layout/activity_settings.xml"
+    ],
+    "blockers": [],
+    "notes": "Toolbar Title overlap fixed with custom TextView. Volume cycling logic implemented (80-85-90). TTS voice selection added to Settings."
+  },
+  "pending_tasks": [
+    { "task": "Check for edge cases in TTS voice loading on older devices", "priority": "low" },
+    { "task": "Add unit tests for Volume Cycle logic", "priority": "medium" }
+  ],
+  "recent_changes": [
+    { "timestamp": "2026-03-19T12:15:00Z", "type": "ui-fix", "description": "Fix missing toolbar title and overlap issue using centered TextView", "files": ["activity_main.xml"] },
+    { "timestamp": "2026-03-19T11:43:00Z", "type": "feature", "description": "Implement UI & Audio Enhancements (Volume cycle, TTS select)", "files": ["MainActivity.kt", "SettingsActivity.kt", "activity_main.xml", "activity_settings.xml"] }
+  ],
+  "errors_encountered": [
+    { "error": "MaterialToolbar title hidden by custom children", "solution": "Use custom TextView with layout_gravity='center' instead of app:title", "resolved": true }
+  ],
+  "decisions_made": [
+    { "decision": "Add Volume Cycle but keep it minimalist", "reason": "User requested 80-85-90 cycle pattern" },
+    { "decision": "Re-enable Volume Controls", "reason": "Explicit user request overrides previous 'Minimalism' strategy" }
+  ]
+}

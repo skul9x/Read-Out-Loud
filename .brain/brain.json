@@ -1,0 +1,50 @@
+{
+  "meta": { "schema_version": "1.1.0", "awf_version": "3.3.0" },
+  "project": {
+    "name": "Read-Out-Loud",
+    "type": "Android (Kotlin)",
+    "status": "v1.1.0 - UI & Audio Enhancements Complete"
+  },
+    "tech_stack": {
+      "core": "Kotlin, Android SDK (Level 35)",
+      "multimedia": "TextToSpeech, AudioManager",
+      "network": "OkHttp 4.12.0",
+      "serialization": "Kotlinx Serialization JSON 1.6.3",
+      "storage": "EncryptedSharedPreferences (Security Crypto 1.1.0-alpha06)",
+      "concurrency": "Kotlin Coroutines 1.8.1",
+      "testing": "Robolectric 4.14.1, MockK 1.13.12"
+    },
+  "api_endpoints": [
+    {
+      "provider": "Google Gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "models": [
+        "gemini-3-flash-preview",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-flash-latest",
+        "gemini-flash-lite-latest"
+      ],
+      "logic": "Model-First Strategy (Try all keys for one model before next model)"
+    }
+  ],
+  "features": [
+    "AI Text Cleaning (Gemini-powered)",
+    "Secure API Key Rotation (Automatic)",
+    "Volume Cycling Interface (80-85-90%)",
+    "Granular TTS Voice Selection (Multiple VN Voices)",
+    "Adaptive Dark Mode UI (Minimalist & Dynamic)"
+  ],
+  "knowledge_items": {
+    "patterns": [
+      "Repository pattern/Data Layer for API/Storage",
+      "Model-First Rotation Strategy for reliability",
+      "Robust Storage Fallback (Encrypted -> Default)"
+    ],
+    "gotchas": [
+      "Target SDK 35 required for core-ktx 1.16.0",
+      "Kotlin regex escape sequences in strings need raw string or double backslash",
+      "EncryptedSharedPreferences fails on Robolectric/JVM without KeyStore workaround"
+    ]
+  }
+}
