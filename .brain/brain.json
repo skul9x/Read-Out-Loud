@@ -35,19 +35,24 @@
     "Unified AI Text Cleaning (One-click button)",
     "Secure API Key Rotation (Automatic)",
     "Volume Cycling Interface (80-85-90%)",
-    "Granular TTS Voice Selection (Multiple VN Voices)"
+    "TTS Karaoke highlighting with orange background & bold text",
+    "Auto-scroll to current word with smart 3s interaction delay",
+    "Read-only Text Area by default (Double-tap to Edit)"
   ],
   "knowledge_items": {
     "patterns": [
       "Material 3 Design Guidelines (Surface Containers, Tonal Buttons)",
       "TTS Progress Broadcast: Service calculates absolute progress across text chunks",
       "Repository pattern/Data Layer for API/Storage",
-      "Model-First Rotation Strategy for reliability"
+      "Model-First Rotation Strategy for reliability",
+      "Efficient Highlight: Using BackgroundColorSpan & clearHighlight for low UI overhead",
+      "Interaction-Aware Scroll: postDelayed runnable handles 3s auto-scroll resume"
     ],
     "gotchas": [
       "onRangeStart callback for TTS requires absolute offset calculation when text is chunked",
       "Material 3 style names differ slightly (e.g., TonalButton vs FilledTonalButton in older docs)",
-      "DataBinding requires full project rebuild after major layout refactors to sync view IDs"
+      "DataBinding requires full project rebuild after major layout refactors to sync view IDs",
+      "ObjectAnimator on scrollY needs careful layout inspection to avoid off-screen jump"
     ]
   }
 }

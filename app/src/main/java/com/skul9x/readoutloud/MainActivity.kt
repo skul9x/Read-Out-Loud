@@ -11,12 +11,24 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
+import android.text.Spannable
 import android.text.method.ScrollingMovementMethod
+import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.util.Log
+import android.animation.ObjectAnimator
+import android.graphics.Color
+import android.graphics.Typeface
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -44,12 +56,30 @@ class MainActivity : AppCompatActivity() {
     private var vietnameseVoices = listOf<Voice>()
     private var selectedVoiceName: String? = null
     private var currentVolumePercent = 80
+    
+    private lateinit var gestureDetector: GestureDetector
+    private var isEditingMode = false
+    private val currentHighlightSpans = mutableListOf<Any>()
+    
+    // Phase 04: Auto-scroll
+    private var isUserScrolling = false
+    private val scrollHandler = Handler(Looper.getMainLooper())
+    private val resumeAutoScrollRunnable = Runnable {
+        isUserScrolling = false
+    }
 
     private val progressReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == TtsService.ACTION_PROGRESS) {
                 val percent = intent.getIntExtra(TtsService.EXTRA_PROGRESS_PERCENT, 0)
+                val wordStart = intent.getIntExtra(TtsService.EXTRA_WORD_START, -1)
+                val wordEnd = intent.getIntExtra(TtsService.EXTRA_WORD_END, -1)
+                
                 updateReadingProgress(percent)
+                
+                if (wordStart >= 0 && wordEnd > wordStart) {
+                    highlightWord(wordStart, wordEnd)
+                }
             }
         }
     }
@@ -78,6 +108,11 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(0, insets.top, 0, 0)
+            
+            val imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime())
+            if (!imeVisible && isEditingMode) {
+                exitEditMode()
+            }
             windowInsets
         }
         
@@ -145,9 +180,69 @@ class MainActivity : AppCompatActivity() {
 
         binding.editText.movementMethod = ScrollingMovementMethod.getInstance()
         
+        // Phase 01: Read-Only & Gesture Handling
+        binding.editText.isFocusable = false
+        binding.editText.isFocusableInTouchMode = false
+        binding.editText.isCursorVisible = false
+
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (!isEditingMode) {
+                    enterEditMode()
+                }
+                return true
+            }
+        })
+
+        binding.editText.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            
+            // Phase 04: Detect User Interaction
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    isUserScrolling = true
+                    scrollHandler.removeCallbacks(resumeAutoScrollRunnable)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // Resume auto-scroll after 3 seconds of no interaction
+                    scrollHandler.postDelayed(resumeAutoScrollRunnable, 3000)
+                }
+            }
+            false
+        }
+        
         binding.volumeButton.setOnClickListener {
             cycleVolume()
         }
+    }
+
+    private fun enterEditMode() {
+        isEditingMode = true
+        clearHighlight()
+        binding.editText.isFocusable = true
+        binding.editText.isFocusableInTouchMode = true
+        binding.editText.isCursorVisible = true
+        binding.editText.requestFocus()
+        
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(binding.editText, InputMethodManager.SHOW_IMPLICIT)
+        updateStatus("Chế độ Edit")
+    }
+
+    private fun exitEditMode() {
+        isEditingMode = false
+        binding.editText.isFocusable = false
+        binding.editText.isFocusableInTouchMode = false
+        binding.editText.isCursorVisible = false
+        binding.editText.clearFocus()
+        
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.editText.windowToken, 0)
+        updateStatus("Đã lưu văn bản")
+        
+        // Re-calculate or format text properly to restore highlight state 
+        // if TTS continues reading or when user hit play again.
+        clearHighlight()
     }
 
     private fun setupVolumeControl() {
@@ -259,9 +354,71 @@ class MainActivity : AppCompatActivity() {
         binding.readingPercentText.text = "$percent%"
         if (percent >= 100) {
             binding.readingStatusText.text = "Finished"
+            clearHighlight() // Clear highlight when done
         } else if (percent > 0) {
             binding.readingStatusText.text = "Reading..."
         }
+    }
+    
+    // Phase 03: Highlight Animation (Karaoke)
+    private fun highlightWord(start: Int, end: Int) {
+        if (isEditingMode) return
+        val editable = binding.editText.text ?: return
+        if (start < 0 || end > editable.length || start >= end) return
+        
+        clearHighlight() // Remove previous highlight
+        
+        // Orange background, White text, Bold
+        val bgSpan = BackgroundColorSpan(Color.parseColor("#FF9800"))
+        val fgSpan = ForegroundColorSpan(Color.WHITE)
+        val boldSpan = StyleSpan(Typeface.BOLD)
+        
+        editable.setSpan(bgSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editable.setSpan(fgSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editable.setSpan(boldSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        
+        currentHighlightSpans.add(bgSpan)
+        currentHighlightSpans.add(fgSpan)
+        currentHighlightSpans.add(boldSpan)
+        
+        autoScrollToHighlight(start)
+    }
+    
+    // Phase 04: Auto-Scroll with Smooth Animation
+    private fun autoScrollToHighlight(start: Int) {
+        if (isEditingMode || isUserScrolling) return
+        
+        val layout = binding.editText.layout ?: return
+        val currentScrollY = binding.editText.scrollY
+        val viewHeight = binding.editText.height
+        val paddingTop = binding.editText.paddingTop
+        val paddingBottom = binding.editText.paddingBottom
+        
+        val line = layout.getLineForOffset(start)
+        val lineTop = layout.getLineTop(line)
+        val lineBottom = layout.getLineBottom(line)
+        
+        val isOffScreenTop = lineTop < currentScrollY
+        val isOffScreenBottom = lineBottom > (currentScrollY + viewHeight - paddingTop - paddingBottom)
+        
+        if (isOffScreenTop || isOffScreenBottom) {
+            // Center the word
+            val targetY = lineTop - (viewHeight / 2) + paddingTop
+            val finalY = targetY.coerceAtLeast(0)
+            
+            ObjectAnimator.ofInt(binding.editText, "scrollY", finalY).apply {
+                duration = 300 // smooth auto-giật effect
+                start()
+            }
+        }
+    }
+    
+    private fun clearHighlight() {
+        val editable = binding.editText.text ?: return
+        for (span in currentHighlightSpans) {
+            editable.removeSpan(span)
+        }
+        currentHighlightSpans.clear()
     }
 
     private fun setLoading(isLoading: Boolean) {
@@ -316,6 +473,7 @@ class MainActivity : AppCompatActivity() {
         startService(intent)
         updateStatus("Đã dừng")
         updateReadingProgress(0)
+        clearHighlight()
     }
 
     override fun onDestroy() {

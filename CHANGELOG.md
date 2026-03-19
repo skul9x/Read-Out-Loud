@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026-03-19] - TTS Karaoke UI & Interaction
+### Added
+- **Karaoke Highlighting**: Full word-by-word highlighting with orange background (`#FF9800`) and bold font for the currently spoken text.
+- **Auto-scroll Logic**: Implemented smooth automatic scrolling using `ObjectAnimator` to keep the reading word in view.
+- **Interaction Delay Protocal**: Added a smart 3-second delay after user scrolling before resuming auto-navigation.
+- **Double-Tap to Edit**: Enhanced `EditText` to be read-only by default (Double-tap to enable editing, auto-save on keyboard dismiss).
+- **TTS Word Sync**: Updated `TtsService` to broadcast `EXTRA_WORD_START` and `EXTRA_WORD_END` indices for frame-perfect UI sync.
+- **E2E Unit tests**: Created `TtsKaraokeTest` to verify highlight logic, interaction detection, and state management.
+
+### Changed
+- **Read-Only UI**: Default text area state is now focusable-false/cursor-hidden for better reading experience.
+- **Progress Broadcast**: Unified progress and word synchronization into a single broadcast intent for reduced overhead.
+
+### Fixed
+- Fixed missing `androidx.test.core` dependency that prevented Robolectric unit tests from running correctly.
+- Optimized Spannable reuse in `MainActivity` to prevent memory leaks during long reading sessions.
+
+
 ## [2026-03-19] - Material 3 UI Revamp & Reading Progress
 ### Added
 - **Material 3 UI Migration**: Full project upgrade to Material Design 3 (M3). Updated colors, typography, surface cards, and buttons for a premium visual experience.

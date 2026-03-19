@@ -235,7 +235,7 @@
                     android:padding="24dp"
                     android:scrollbars="vertical"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
+                    android:textSize="32sp"
                     android:lineSpacingExtra="4dp" />
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>

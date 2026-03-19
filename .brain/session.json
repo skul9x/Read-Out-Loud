@@ -1,33 +1,29 @@
 {
-  "updated_at": "2026-03-19T13:45:00Z",
+  "updated_at": "2026-03-19T14:22:00Z",
   "working_on": {
-    "feature": "Material 3 UI & Reading Progress",
-    "task": "Completed M3 UI Revamp and Progress Logic",
-    "status": "Finalizing",
+    "feature": "TTS Karaoke UI & Interaction",
+    "task": "Completed Phases 01-05: Double-Tap Edit, Karaoke Sync, Auto-Scroll, E2E Testing",
+    "status": "Archived",
     "files": [
       "app/src/main/java/com/skul9x/readoutloud/MainActivity.kt",
       "app/src/main/java/com/skul9x/readoutloud/TtsService.kt",
-      "app/src/main/res/layout/activity_main.xml",
-      "app/src/main/res/layout/activity_settings.xml",
-      "app/src/main/res/values/colors.xml",
-      "app/src/main/res/values/themes.xml"
+      "app/src/test/java/com/skul9x/readoutloud/TtsKaraokeTest.kt"
     ],
-    "blockers": [],
-    "notes": "Full visual upgrade to Material 3. Implemented absolute progress tracking in TtsService using onRangeStart. Connected to MainActivity via LocalBroadcast (ACTION_PROGRESS). Verified build SUCCESS."
+    "notes": "Full Karaoke system implemented using Spans for high efficiency. Added smart interaction guard (3s delay) for Auto-scroll. Verified build success & test coverage."
   },
   "pending_tasks": [
-    { "task": "Test progress tracking with extremely long texts (>10k chars)", "priority": "medium" },
-    { "task": "Optimize TTS chunking to avoid punctuation splits in middle of progress broadcast", "priority": "low" }
+    { "task": "Fine-tune scroll animation duration (user might prefer 200ms or 400ms)", "priority": "low" },
+    { "task": "Check accessibility labels for the new progress and status texts", "priority": "medium" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-03-19T13:30:00Z", "type": "ui-refactor", "description": "Material 3 Migration: Dark theme, cards, and buttons updated to M3 standards.", "files": ["activity_main.xml", "colors.xml", "themes.xml"] },
-    { "timestamp": "2026-03-19T13:40:00Z", "type": "feature", "description": "Reading Progress: Added LinearProgressIndicator and logic to track TTS position.", "files": ["MainActivity.kt", "TtsService.kt"] }
+    { "timestamp": "2026-03-19T14:15:00Z", "type": "feature", "description": "Phase 04-05: Auto-scroll & E2E Integration complete.", "files": ["MainActivity.kt", "TtsKaraokeTest.kt"] },
+    { "timestamp": "2026-03-19T13:55:00Z", "type": "feature", "description": "Phase 01-03: Double-tap, TTS word sync, and Highlight logic implemented.", "files": ["MainActivity.kt", "TtsService.kt"] }
   ],
   "errors_encountered": [
-    { "error": "Missing ic_volume_up and incorrect M3 style names caused build failure", "solution": "Created vector asset and corrected style to Widget.Material3.Button.TonalButton", "resolved": true }
+    { "error": "Missing Robolectric dependency (androidx.test.core) caused unit test failures", "solution": "Updated libs.versions.toml and app/build.gradle.kts to include core", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Absolute Progress Formula", "reason": "CumulativeOffset + CurrentChunkOffset allows tracking progress even when text is split into chunks." },
-    { "decision": "Material 3 Adoption", "reason": "Aligning with modern Android UX standards for premium look and feel." }
+    { "decision": "Spannable Highlighting", "reason": "Superior to re-setting text or using HTML as it preserves selection/focus and consumes less battery." },
+    { "decision": "3s Delay Protocal", "reason": "Wait for user to stop interaction before resuming auto-scroll prevents UI jumping during active reading." }
   ]
 }

@@ -37,6 +37,8 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         const val EXTRA_TEXT = "EXTRA_TEXT"
         const val EXTRA_VOICE_NAME = "EXTRA_VOICE_NAME"
         const val EXTRA_PROGRESS_PERCENT = "EXTRA_PROGRESS_PERCENT"
+        const val EXTRA_WORD_START = "EXTRA_WORD_START"
+        const val EXTRA_WORD_END = "EXTRA_WORD_END"
     }
 
     override fun onCreate() {
@@ -71,8 +73,9 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
                         val index = id.removePrefix("chunk_").toIntOrNull() ?: 0
                         if (index < chunkStartOffsets.size && totalTextLength > 0) {
                             val absoluteStart = chunkStartOffsets[index] + start
+                            val absoluteEnd = chunkStartOffsets[index] + end
                             val percent = (absoluteStart * 100) / totalTextLength
-                            broadcastProgress(percent.coerceIn(0, 100))
+                            broadcastProgress(percent.coerceIn(0, 100), absoluteStart, absoluteEnd)
                         }
                     }
                 }
@@ -154,9 +157,11 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun broadcastProgress(percent: Int) {
+    private fun broadcastProgress(percent: Int, wordStart: Int = -1, wordEnd: Int = -1) {
         val intent = Intent(ACTION_PROGRESS).apply {
             putExtra(EXTRA_PROGRESS_PERCENT, percent)
+            putExtra(EXTRA_WORD_START, wordStart)
+            putExtra(EXTRA_WORD_END, wordEnd)
             setPackage(packageName)
         }
         sendBroadcast(intent)
