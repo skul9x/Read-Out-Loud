@@ -1,163 +1,324 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="?attr/colorSurfaceContainerLowest"
+    android:background="@color/black"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        app:title="@string/app_name"
-        app:titleCentered="true" />
-
-    <!-- Cụm nút điều khiển chính -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/pasteButton"
-            style="@style/Widget.Material3.Button.TextButton.Icon"
-            android:layout_width="0dp"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/black">
+
+            <!-- Volume Button (Left) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/volumeButton"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="4dp"
+                android:minWidth="48dp"
+                android:padding="0dp"
+                android:text="80%"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- Centered Title -->
+            <TextView
+                android:id="@+id/toolbarTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="READ-OUT-LOUD"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Settings Button (Right) -->
+            <ImageButton
+                android:id="@+id/settingsButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/white" />
+        </com.google.android.material.appbar.MaterialToolbar>
+
+        <!-- Gemini AI Toggle Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/btn_paste"
-            android:ellipsize="end"
-            android:maxLines="1"
-            app:icon="@drawable/ic_paste" />
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/card_bg"
+            app:cardCornerRadius="24dp"
+            app:strokeWidth="0dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/readButton"
-            style="@style/Widget.Material3.Button.Icon"
-            android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="GEMINI AI READ"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <!-- Polish Button Added -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/polishButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="POLISH"
+                    android:textColor="@color/gemini_blue"
+                    android:textStyle="bold"
+                    android:visibility="visible"
+                    app:icon="@drawable/ic_auto_fix"
+                    app:iconTint="@color/gemini_blue" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/geminiToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="@color/white"
+                    app:trackTint="@color/gemini_blue" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Controls Cluster (Moved Up as per request) -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:text="@string/btn_read"
-            android:ellipsize="end"
-            android:maxLines="1"
-            app:icon="@drawable/ic_play_arrow" />
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/stopButton"
-            style="@style/Widget.Material3.Button.OutlinedButton.Icon"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/btn_stop"
-            android:ellipsize="end"
-            android:maxLines="1"
-            app:icon="@drawable/ic_stop" />
-    </LinearLayout>
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/pasteCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/card_bg"
+                app:cardCornerRadius="16dp"
+                app:strokeWidth="0dp">
 
-    <!-- Cụm chỉnh âm lượng -->
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/volumeToggleGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        app:selectionRequired="true"
-        app:singleSelection="true">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-        <Button
-            android:id="@+id/volumeButton80"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/volume_80"
-            android:contentDescription="@string/volume_80_desc" />
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_paste"
+                        app:tint="@color/white" />
 
-        <Button
-            android:id="@+id/volumeButton85"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/volume_85"
-            android:contentDescription="@string/volume_85_desc" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="PASTE"
+                        android:textColor="@color/white"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/volumeButton90"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/volume_90"
-            android:contentDescription="@string/volume_90_desc" />
-    </com.google.android.material.button.MaterialButtonToggleGroup>
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/readCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1.2"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/card_bg"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/gemini_blue"
+                app:strokeWidth="2dp">
 
-    <!-- Khung nhập văn bản -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="16dp"
-        android:layout_weight="1"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayout"
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_play_arrow"
+                        app:tint="@color/gemini_blue" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="READ"
+                        android:textColor="@color/gemini_blue"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/stopCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/card_bg"
+                app:cardCornerRadius="16dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_stop"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="STOP"
+                        android:textColor="@color/white"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Main Text Input Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:hint="@string/hint_input_text"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="0dp"
-            app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_edit"
-            app:endIconContentDescription="@string/title_edit_text">
+            android:layout_height="0dp"
+            android:layout_margin="16dp"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@color/black"
+            app:cardCornerRadius="24dp"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="1dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editText"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@android:color/transparent"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                android:overScrollMode="always"
-                android:padding="16dp"
-                android:scrollbars="vertical" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="Paste your text here or type something..."
+                android:textColorHint="#88FFFFFF"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:hintEnabled="true">
 
-    </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:overScrollMode="always"
+                    android:padding="20dp"
+                    android:scrollbars="vertical"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-    <!-- Chọn giọng đọc -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/voiceSelectorLayout"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:hint="@string/hint_select_voice">
-
-        <AutoCompleteTextView
+        <TextView
+            android:id="@+id/statusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="none" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:background="#11FFFFFF"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Ready"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp" />
 
-    <!-- Copyright -->
-    <TextView
+        <!-- Copyright Text -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Copyright 2026 Nguyễn Duy Trường"
+            android:textColor="#44FFFFFF"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Glassmorphism Loading Overlay -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:paddingBottom="16dp"
-        android:text="@string/copyright_text"
-        android:textAppearance="?attr/textAppearanceBodySmall"
-        android:textColor="?attr/colorOnSurfaceVariant" />
+        android:layout_height="match_parent"
+        android:background="#CC000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/glass_bg"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                app:indicatorColor="@color/gemini_blue"
+                app:indicatorSize="64dp"
+                app:trackColor="#33FFFFFF"
+                app:trackThickness="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Gemini đang xử lý..."
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </FrameLayout>
+
+</FrameLayout>
+

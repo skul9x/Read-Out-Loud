@@ -11,29 +11,17 @@ import android.os.IBinder
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
-import android.widget.Toast
-import android.os.Handler
-import android.os.Looper
 import java.util.Locale
 
 class TtsService : Service(), TextToSpeech.OnInitListener {
 
     private lateinit var tts: TextToSpeech
-    
-    // Sử dụng @Volatile để đảm bảo visibility giữa các threads
-    @Volatile
     private var isTtsInitialized = false
 
-    // Object lock để synchronize access
-    private val lock = Any()
-
     // Biến để lưu yêu cầu đọc trong khi chờ TTS khởi tạo
-    @Volatile
     private var pendingTextToSpeak: String? = null
-    @Volatile
     private var pendingVoiceNameToUse: String? = null
 
-    @Volatile
     private var lastUtteranceId: String? = null
 
     companion object {
@@ -63,13 +51,12 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
+            isTtsInitialized = true
             tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
 
                 override fun onDone(utteranceId: String?) {
-                    // Lưu giá trị vào local variable để tránh race condition
-                    val currentLastUtteranceId = lastUtteranceId
-                    if (utteranceId == currentLastUtteranceId) {
+                    if (utteranceId == lastUtteranceId) {
                         stopReadingAndService()
                     }
                 }
@@ -80,17 +67,11 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
                 }
             })
 
-            // Sử dụng synchronized block để đảm bảo thread-safety
-            synchronized(lock) {
-                isTtsInitialized = true
-                // Sau khi khởi tạo thành công, kiểm tra xem có yêu cầu nào đang chờ không
-                pendingTextToSpeak?.let { text ->
-                    handlePendingRequest(text, pendingVoiceNameToUse)
-                }
+            // Sau khi khởi tạo thành công, kiểm tra xem có yêu cầu nào đang chờ không
+            pendingTextToSpeak?.let { text ->
+                handlePendingRequest(text, pendingVoiceNameToUse)
             }
         } else {
-            // Thông báo lỗi cho user khi TTS init thất bại
-            showToastOnMainThread(getString(R.string.msg_tts_service_error))
             stopSelf()
         }
     }
@@ -104,18 +85,13 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
-        // Sử dụng synchronized block để đảm bảo thread-safety
-        synchronized(lock) {
-            if (isTtsInitialized) {
-                // Nếu TTS đã sẵn sàng, thực hiện đọc ngay lập tức
-                executeReading(text, voiceName)
-            } else {
-                // Nếu TTS chưa sẵn sàng, lưu lại yêu cầu để xử lý sau trong onInit
-                // Thông báo cho user biết đang chờ khởi tạo
-                showToastOnMainThread(getString(R.string.msg_tts_not_ready))
-                pendingTextToSpeak = text
-                pendingVoiceNameToUse = voiceName
-            }
+        if (isTtsInitialized) {
+            // Nếu TTS đã sẵn sàng, thực hiện đọc ngay lập tức
+            executeReading(text, voiceName)
+        } else {
+            // Nếu TTS chưa sẵn sàng, lưu lại yêu cầu để xử lý sau trong onInit
+            pendingTextToSpeak = text
+            pendingVoiceNameToUse = voiceName
         }
     }
 
@@ -129,8 +105,7 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     private fun executeReading(text: String, voiceName: String?) {
         tts.language = Locale("vi", "VN")
         voiceName?.let { name ->
-            // Sử dụng null-safe operator để tránh NPE
-            val voice = tts.voices?.find { it.name == name }
+            val voice = tts.voices.find { it.name == name }
             tts.voice = voice ?: tts.defaultVoice
         }
 
@@ -141,8 +116,6 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     private fun speakText(text: String) {
         val chunks = splitTextForTts(text)
         if (chunks.isEmpty()) {
-            // Thông báo lỗi cho user khi không thể xử lý văn bản
-            showToastOnMainThread(getString(R.string.msg_text_processing_error))
             stopReadingAndService()
             return
         }
@@ -188,25 +161,18 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.notification_reading))
+            .setContentText("Đang đọc văn bản...")
             .setSmallIcon(R.drawable.ic_play_arrow)
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
-            .addAction(R.drawable.ic_stop, getString(R.string.btn_stop), stopPendingIntent)
+            .addAction(R.drawable.ic_stop, "Dừng", stopPendingIntent)
             .build()
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_LOW)
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "Kênh dịch vụ đọc", NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(serviceChannel)
-        }
-    }
-
-    // Helper function để hiển thị Toast từ background thread
-    private fun showToastOnMainThread(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(this@TtsService, message, Toast.LENGTH_SHORT).show()
         }
     }
 

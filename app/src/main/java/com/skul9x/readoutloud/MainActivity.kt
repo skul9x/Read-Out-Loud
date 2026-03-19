@@ -1,63 +1,60 @@
 package com.skul9x.readoutloud
 
 import android.Manifest
-import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
+import android.media.AudioManager
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.text.method.ScrollingMovementMethod
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
+import android.util.Log
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.widget.addTextChangedListener
-import com.google.android.material.textfield.TextInputLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.lifecycleScope
+import com.skul9x.readoutloud.data.ApiKeyManager
+import com.skul9x.readoutloud.data.GeminiApiClient
 import com.skul9x.readoutloud.databinding.ActivityMainBinding
+import com.skul9x.readoutloud.ui.SettingsActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
-import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var tts: TextToSpeech
-    private lateinit var audioManager: AudioManager
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var geminiApiClient: GeminiApiClient
 
     private var vietnameseVoices = listOf<Voice>()
     private var selectedVoiceName: String? = null
-    private val voiceDisplayNames = mutableListOf<String>()
-    private val voiceMap = mutableMapOf<String, String>()
+    private var currentVolumePercent = 80
 
     companion object {
         private const val PREFS_NAME = "ReadOutLoudPrefs"
         private const val KEY_VOICE_NAME = "lastVoiceName"
+        private const val KEY_GEMINI_ENABLED = "gemini_enabled"
     }
-
-    private val editActivityLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val text = result.data?.getStringExtra(FullScreenEditActivity.EXTRA_TEXT)
-                if (text != null) {
-                    binding.editText.setText(text)
-                }
-            }
-        }
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 startReading()
             } else {
-                Toast.makeText(this, R.string.msg_permission_required, Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Cần cấp quyền thông báo để chạy nền", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -65,51 +62,102 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
 
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        // Fix Status Bar Overlap (Window Insets)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(0, insets.top, 0, 0)
+            windowInsets
+        }
+        
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        geminiApiClient = GeminiApiClient(this)
 
         setupUI()
+        setupVolumeControl()
         initializeTtsForVoiceDiscovery()
-        setInitialSystemVolume()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reload selected voice preference
+        if (::sharedPreferences.isInitialized) {
+            val savedVoice = sharedPreferences.getString(KEY_VOICE_NAME, null)
+            if (savedVoice != null) {
+                selectedVoiceName = savedVoice
+            }
+        }
     }
 
     private fun setupUI() {
-        binding.pasteButton.setOnClickListener { pasteFromClipboard() }
-        binding.readButton.setOnClickListener { checkPermissionsAndRead() }
-        binding.stopButton.setOnClickListener { stopReading() }
+        // UI Navigation
+        binding.settingsButton.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Gemini Toggle
+        val isGeminiEnabled = sharedPreferences.getBoolean(KEY_GEMINI_ENABLED, false)
+        binding.geminiToggle.isChecked = isGeminiEnabled
+        binding.polishButton.isEnabled = isGeminiEnabled
+        binding.polishButton.alpha = if (isGeminiEnabled) 1.0f else 0.5f
+
+        binding.geminiToggle.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean(KEY_GEMINI_ENABLED, isChecked).apply()
+            binding.polishButton.isEnabled = isChecked
+            binding.polishButton.alpha = if (isChecked) 1.0f else 0.5f
+            updateStatus(if (isChecked) "Gemini AI: ON" else "Gemini AI: OFF")
+        }
+
+        // Polish Text Action
+        binding.polishButton.setOnClickListener {
+            val textToPolish = binding.editText.text.toString()
+            if (textToPolish.isBlank()) {
+                Toast.makeText(this, "Không có nội dung để dọn dẹp", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            processWithAI(textToPolish)
+        }
+
+        // Action Cards (Modern UI)
+        binding.pasteCard.setOnClickListener { pasteFromClipboard() }
+        binding.readCard.setOnClickListener { checkPermissionsAndRead() }
+        binding.stopCard.setOnClickListener { stopReading() }
 
         binding.editText.movementMethod = ScrollingMovementMethod.getInstance()
         
-        // Setup Edit Icon Logic
-        binding.textInputLayout?.setEndIconOnClickListener {
-            val intent = Intent(this, FullScreenEditActivity::class.java).apply {
-                putExtra(FullScreenEditActivity.EXTRA_TEXT, binding.editText.text.toString())
-            }
-            editActivityLauncher.launch(intent)
+        binding.volumeButton.setOnClickListener {
+            cycleVolume()
         }
+    }
 
-        // Hide edit icon if text is empty, show if not
-        fun updateEndIconVisibility() {
-            binding.textInputLayout?.isEndIconVisible = !binding.editText.text.isNullOrEmpty()
-        }
-        
-        binding.editText.addTextChangedListener {
-            updateEndIconVisibility()
-        }
-        updateEndIconVisibility() // Initial state
+    private fun setupVolumeControl() {
+        // Initial setup to 80% as requested
+        setDeviceVolume(80)
+        binding.volumeButton.text = "80%"
+    }
 
-        binding.volumeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                val percentage = when (checkedId) {
-                    R.id.volumeButton80 -> 0.80f
-                    R.id.volumeButton85 -> 0.85f
-                    R.id.volumeButton90 -> 0.90f
-                    else -> 0.80f // Mặc định
-                }
-                setSystemVolume(percentage)
-            }
+    private fun cycleVolume() {
+        currentVolumePercent = when (currentVolumePercent) {
+            80 -> 85
+            85 -> 90
+            else -> 80
+        }
+        setDeviceVolume(currentVolumePercent)
+        binding.volumeButton.text = "$currentVolumePercent%"
+    }
+
+    private fun setDeviceVolume(percent: Int) {
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val targetVolume = (maxVolume * (percent / 100.0)).toInt()
+            audioManager.setStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                targetVolume,
+                AudioManager.FLAG_SHOW_UI
+            )
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error setting volume: ${e.message}")
         }
     }
 
@@ -117,63 +165,87 @@ class MainActivity : AppCompatActivity() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 vietnameseVoices = tts.voices
-                    ?.filter { it.locale == Locale("vi", "VN") && !it.isNetworkConnectionRequired }
-                    ?.distinctBy { it.name }
-                    ?: emptyList()
+                    .filter { it.locale == Locale("vi", "VN") && !it.isNetworkConnectionRequired }
+                    .distinctBy { it.name }
 
                 if (vietnameseVoices.isNotEmpty()) {
-                    populateVoiceSelector()
-                } else {
-                    Toast.makeText(this, R.string.msg_no_vietnamese_voice, Toast.LENGTH_LONG).show()
+                    selectedVoiceName = sharedPreferences.getString(KEY_VOICE_NAME, vietnameseVoices[0].name)
                 }
-            } else {
-                Toast.makeText(this, R.string.msg_tts_init_failed, Toast.LENGTH_LONG).show()
             }
-        }
-    }
-
-    private fun populateVoiceSelector() {
-        // Clear previous data to avoid duplication
-        voiceDisplayNames.clear()
-        voiceMap.clear()
-
-        vietnameseVoices.forEachIndexed { index, voice ->
-            val displayName = getString(R.string.voice_name_format, index + 1)
-            voiceDisplayNames.add(displayName)
-            voiceMap[displayName] = voice.name
-        }
-
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, voiceDisplayNames)
-        val autoCompleteTextView = (binding.voiceSelectorLayout.editText as? AutoCompleteTextView)
-        autoCompleteTextView?.setAdapter(adapter)
-
-        val lastVoiceName = sharedPreferences.getString(KEY_VOICE_NAME, null)
-        val lastDisplayName = voiceMap.entries.find { it.value == lastVoiceName }?.key
-
-        if (lastDisplayName != null) {
-            autoCompleteTextView?.setText(lastDisplayName, false)
-            selectedVoiceName = lastVoiceName
-        } else if (voiceDisplayNames.isNotEmpty()) {
-            autoCompleteTextView?.setText(voiceDisplayNames[0], false)
-            selectedVoiceName = voiceMap[voiceDisplayNames[0]]
-        }
-
-        autoCompleteTextView?.setOnItemClickListener { _, _, position, _ ->
-            val displayName = adapter.getItem(position) ?: return@setOnItemClickListener
-            selectedVoiceName = voiceMap[displayName]
-            saveSettings()
         }
     }
 
     private fun pasteFromClipboard() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        if (clipboard.hasPrimaryClip()) {
-            val textToPaste = clipboard.primaryClip?.getItemAt(0)?.text.toString()
-            val plainText = textToPaste.replace(Regex("[*#_`~-]"), "")
-            binding.editText.setText(plainText)
-            Toast.makeText(this, R.string.msg_pasted_filtered, Toast.LENGTH_SHORT).show()
+        if (!clipboard.hasPrimaryClip()) {
+            Toast.makeText(this, "Clipboard trống", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val rawText = clipboard.primaryClip?.getItemAt(0)?.text.toString()
+        
+        // Luôn lọc cơ bản khi dán (Local Regex) - Không tốn thời gian gọi AI tự động
+        val plainText = rawText.replace(Regex("[*#_`~]"), "")
+        binding.editText.setText(plainText)
+        updateStatus("Đã dán (Lọc cơ bản)")
+    }
+
+    private fun processWithAI(text: String) {
+        val apiKeys = ApiKeyManager.getInstance(this).getApiKeys()
+        if (apiKeys.isEmpty()) {
+            Toast.makeText(this, "Chưa cấu hình Gemini API Key", Toast.LENGTH_LONG).show()
+            binding.geminiToggle.isChecked = false
+            return
+        }
+
+        updateStatus("Gemini đang dọn dẹp văn bản...")
+        setLoading(true)
+
+        lifecycleScope.launch {
+            try {
+                geminiApiClient.refreshApiKeys()
+                val result = geminiApiClient.cleanTextWithGemini(text)
+                
+                withContext(Dispatchers.Main) {
+                    setLoading(false)
+                    when (result) {
+                        is GeminiApiClient.GeminiResult.Success -> {
+                            binding.editText.setText(result.text)
+                            updateStatus("Gemini: Done (${result.model.substringAfter("/")})")
+                        }
+                        else -> {
+                            val msg = result.getFinalText()
+                            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_LONG).show()
+                            updateStatus("Lỗi Gemini")
+                            // Fallback to basic clean
+                            binding.editText.setText(text.replace(Regex("[*#_`~]"), ""))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                setLoading(false)
+                updateStatus("Lỗi hệ thống")
+                binding.editText.setText(text.replace(Regex("[*#_`~]"), ""))
+            }
+        }
+    }
+
+    private fun updateStatus(status: String) {
+        binding.statusText.text = status
+    }
+
+    private fun setLoading(isLoading: Boolean) {
+        binding.pasteCard.isEnabled = !isLoading
+        binding.readCard.isEnabled = !isLoading
+        binding.geminiToggle.isEnabled = !isLoading
+        binding.polishButton.isEnabled = !isLoading && binding.geminiToggle.isChecked
+        
+        binding.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
+        
+        if (isLoading) {
+            binding.statusText.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
         } else {
-            Toast.makeText(this, R.string.msg_clipboard_empty, Toast.LENGTH_SHORT).show()
+            binding.statusText.setBackgroundColor(android.graphics.Color.parseColor("#11FFFFFF"))
         }
     }
 
@@ -190,7 +262,8 @@ class MainActivity : AppCompatActivity() {
     private fun startReading() {
         val text = binding.editText.text.toString()
         if (text.isBlank()) {
-            Toast.makeText(this, R.string.msg_enter_text, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Vui lòng nhập văn bản", Toast.LENGTH_SHORT).show()
+            updateStatus("Văn bản trống")
             return
         }
 
@@ -204,6 +277,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(intent)
         }
+        updateStatus("Đang đọc...")
     }
 
     private fun stopReading() {
@@ -211,28 +285,7 @@ class MainActivity : AppCompatActivity() {
             action = TtsService.ACTION_STOP
         }
         startService(intent)
-    }
-
-    private fun setInitialSystemVolume() {
-        binding.volumeToggleGroup.check(R.id.volumeButton80)
-        setSystemVolume(0.80f)
-    }
-
-    private fun setSystemVolume(percentage: Float) {
-        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val targetVolume = (maxVolume * percentage).roundToInt()
-        try {
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
-        } catch (e: SecurityException) {
-            Toast.makeText(this, R.string.msg_no_volume_permission, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun saveSettings() {
-        with(sharedPreferences.edit()) {
-            putString(KEY_VOICE_NAME, selectedVoiceName)
-            apply()
-        }
+        updateStatus("Đã dừng")
     }
 
     override fun onDestroy() {
@@ -242,4 +295,3 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
-

@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -24,10 +25,6 @@
             android:foregroundServiceType="dataSync" />
 
         <activity
-            android:name=".FullScreenEditActivity"
-            android:theme="@style/Theme.ReadOutLoud"
-            android:windowSoftInputMode="stateVisible|adjustResize" />
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
@@ -36,6 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:theme="@style/Theme.ReadOutLoud" />
     </application>
 
 </manifest>

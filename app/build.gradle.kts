@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,6 +37,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -45,13 +51,15 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     
-    // Core Logic
+    // Gemini Integration Dependencies
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.security.crypto)
-    implementation(libs.kotlinx.coroutines.android)
-
+    
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

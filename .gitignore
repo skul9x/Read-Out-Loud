@@ -13,3 +13,16 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Android Studio
+/app/build/
+*.class
+*.log
+*.swp
+*~
+.idea/
+!.idea/codeStyles/
+!.idea/vcs.xml
+
+# Ensure .brain is uploaded as requested
+!.brain/
