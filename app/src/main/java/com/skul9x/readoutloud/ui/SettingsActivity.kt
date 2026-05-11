@@ -12,13 +12,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.skul9x.readoutloud.data.ApiKeyManager
+import com.skul9x.readoutloud.data.ModelManager
+import com.skul9x.readoutloud.data.ModelQuotaManager
 import com.skul9x.readoutloud.databinding.ActivitySettingsBinding
+import androidx.recyclerview.widget.LinearLayoutManager
 import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var apiKeyManager: ApiKeyManager
+    private lateinit var modelManager: ModelManager
+    private lateinit var quotaManager: ModelQuotaManager
+    private lateinit var modelAdapter: ModelAdapter
     private lateinit var tts: TextToSpeech
     
     private var vietnameseVoices = listOf<Voice>()
@@ -41,10 +47,42 @@ class SettingsActivity : AppCompatActivity() {
         }
         
         apiKeyManager = ApiKeyManager.getInstance(this)
+        modelManager = ModelManager.getInstance(this)
+        quotaManager = ModelQuotaManager.getInstance(this)
         
         setupUI()
+        setupModelsList()
         loadCurrentKeys()
         initializeTts()
+    }
+
+    private fun setupModelsList() {
+        modelAdapter = ModelAdapter(
+            models = modelManager.getModelItems(),
+            quotaManager = quotaManager,
+            apiKeyManager = apiKeyManager,
+            onToggle = { index ->
+                modelManager.toggleModel(index)
+                refreshModelsList()
+            },
+            onMoveUp = { index ->
+                modelManager.moveUp(index)
+                refreshModelsList()
+            },
+            onMoveDown = { index ->
+                modelManager.moveDown(index)
+                refreshModelsList()
+            }
+        )
+
+        binding.modelsRecyclerView.apply {
+            layoutManager = LinearLayoutManager(this@SettingsActivity)
+            adapter = modelAdapter
+        }
+    }
+
+    private fun refreshModelsList() {
+        modelAdapter.updateModels(modelManager.getModelItems())
     }
 
     private fun setupUI() {

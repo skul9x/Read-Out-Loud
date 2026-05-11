@@ -5,6 +5,7 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -21,6 +22,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
+import kotlin.math.pow
 
 /**
  * Gemini API client with automatic failover between API keys and models.
@@ -28,7 +30,9 @@ import kotlin.coroutines.resumeWithException
  */
 class GeminiApiClient(
     context: Context,
-    private val apiKeyManager: ApiKeyManager = ApiKeyManager.getInstance(context)
+    private val apiKeyManager: ApiKeyManager = ApiKeyManager.getInstance(context),
+    private val modelManager: ModelManager = ModelManager.getInstance(context),
+    private val quotaManager: ModelQuotaManager = ModelQuotaManager.getInstance(context)
 ) {
     companion object {
         private const val TAG = "GeminiApiClient"
@@ -59,6 +63,8 @@ class GeminiApiClient(
     @Volatile
     private var currentModelIndex = 0
 
+    internal var hasStartedStreaming = false // Requirement 17
+
     suspend fun refreshApiKeys() {
         stateMutex.withLock {
             apiKeys = apiKeyManager.getApiKeys().toList()
@@ -71,52 +77,92 @@ class GeminiApiClient(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun cleanTextWithGemini(content: String): GeminiResult {
         return withContext(Dispatchers.IO) {
-            // Thread-safe read of current state
-            val keys = stateMutex.withLock { apiKeys.toList() }
-            
-            if (keys.isEmpty()) {
-                return@withContext GeminiResult.NoApiKeys
-            }
-            
-            // Strategy: For each model, try ALL API keys before moving to next model
-            for (modelIndex in MODELS.indices) {
-                val model = MODELS[modelIndex]
-                
-                for (keyIndex in keys.indices) {
-                    val apiKey = keys[keyIndex]
-                    
-                    Log.d(TAG, "Trying Model: $model | API key ${keyIndex + 1}/${keys.size}")
+            val keys = apiKeyManager.getApiKeys().toList()
+            val models = modelManager.getModels()
 
-                    val result = tryGenerateContent(apiKey, model, content)
+            if (keys.isEmpty()) return@withContext GeminiResult.NoApiKeys
+            if (models.isEmpty()) return@withContext GeminiResult.Error("No models configured")
+
+            hasStartedStreaming = false
+
+            // Requirement 10: Outer (Models), Inner (Keys)
+            for (mIndex in models.indices) {
+                val model = models[mIndex]
+                
+                for (kIndex in keys.indices) {
+                    val apiKey = keys[kIndex]
+                    val pairHash = com.skul9x.readoutloud.utils.SecurityUtils.getPairHash(model, apiKey)
+
+                    // Requirement 11: Check isAvailable before each call
+                    if (!quotaManager.isAvailable(pairHash)) {
+                        Log.d(TAG, "Skipping $model with key ${kIndex + 1}: Not available")
+                        continue
+                    }
+
+                    Log.d(TAG, "Trying Model: $model | API key ${kIndex + 1}/${keys.size}")
+
+                    // Requirement 18: retryWithBackoff only for IOException before streaming starts
+                    val result = retryWithBackoff {
+                        tryGenerateContent(apiKey, model, content)
+                    }
 
                     when (result) {
                         is ApiResult.Success -> {
-                            // Update shared state with successful indices
                             stateMutex.withLock {
-                                currentApiKeyIndex = keyIndex
-                                currentModelIndex = modelIndex
+                                currentApiKeyIndex = kIndex
+                                currentModelIndex = mIndex
                             }
-                            Log.d(TAG, "Gemini SUCCESS: $model | API key ${keyIndex + 1}")
                             return@withContext GeminiResult.Success(result.text, model)
                         }
                         is ApiResult.QuotaExceeded -> {
-                            Log.w(TAG, "Quota exceeded: $model | API key ${keyIndex + 1}, trying next key...")
-                            continue // Try next API key for same model
+                            // Requirement 14: 429 daily/quota -> markExhausted
+                            quotaManager.markExhausted(pairHash)
+                            continue 
+                        }
+                        is ApiResult.RateLimited -> {
+                            // Requirement 13: 429 RPM/Rate limit -> markCooldown
+                            quotaManager.markCooldown(pairHash)
+                            continue
+                        }
+                        is ApiResult.ServiceUnavailable -> {
+                            // Requirement 15: 503 -> markCooldown
+                            quotaManager.markCooldown(pairHash)
+                            continue
                         }
                         is ApiResult.ModelNotFound -> {
-                            Log.w(TAG, "Model not found: $model, skipping to next model...")
-                            break // Skip to next model (all keys will have same result)
+                            // Requirement 16: 400/404 -> Next Model (break inner loop)
+                            Log.w(TAG, "Model $model not found or bad request, skipping model")
+                            break
                         }
                         is ApiResult.Error -> {
-                            Log.e(TAG, "API error: ${result.message} | $model | API key ${keyIndex + 1}")
-                            continue // Try next API key
+                            Log.e(TAG, "API error: ${result.message}")
+                            continue
                         }
                     }
                 }
             }
-            
+
             return@withContext GeminiResult.AllQuotaExhausted
         }
+    }
+
+    private suspend fun <T> retryWithBackoff(
+        maxRetries: Int = 2,
+        initialDelay: Long = 1000,
+        block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        repeat(maxRetries) { attempt ->
+            try {
+                return block()
+            } catch (e: IOException) {
+                if (hasStartedStreaming || attempt == maxRetries - 1) throw e
+                Log.w(TAG, "IOException on attempt ${attempt + 1}, retrying in $currentDelay ms...")
+                delay(currentDelay)
+                currentDelay *= 2
+            }
+        }
+        return block() // Should not reach here normally
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -170,14 +216,15 @@ class GeminiApiClient(
                             ApiResult.Error("Empty response from API")
                         }
                     }
-                    429 -> ApiResult.QuotaExceeded
-                    404 -> {
-                        if (responseBody.contains("not found", ignoreCase = true)) {
-                            ApiResult.ModelNotFound
+                    429 -> {
+                        if (responseBody.contains("quota", ignoreCase = true)) {
+                            ApiResult.QuotaExceeded
                         } else {
-                            ApiResult.Error("Not found: $responseBody")
+                            ApiResult.RateLimited
                         }
                     }
+                    503 -> ApiResult.ServiceUnavailable
+                    400, 404 -> ApiResult.ModelNotFound
                     else -> ApiResult.Error("HTTP ${resp.code}: $responseBody")
                 }
             }
@@ -266,6 +313,8 @@ $content
     sealed class ApiResult {
         data class Success(val text: String) : ApiResult()
         object QuotaExceeded : ApiResult()
+        object RateLimited : ApiResult()
+        object ServiceUnavailable : ApiResult()
         object ModelNotFound : ApiResult()
         data class Error(val message: String) : ApiResult()
     }

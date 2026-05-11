@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.skul9x.readoutloud.utils.SecurityUtils
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -33,6 +34,13 @@ class ApiKeyManager private constructor(context: Context) {
             return rawInput.split(Regex("""[\n,\s]+"""))
                 .map { it.trim() }
                 .filter { it.startsWith("AIza") && it.length >= 30 }
+        }
+
+        /**
+         * Computes SHA-256 hash of an API key.
+         */
+        fun getSha256(apiKey: String): String {
+            return SecurityUtils.sha256(apiKey)
         }
     }
 
