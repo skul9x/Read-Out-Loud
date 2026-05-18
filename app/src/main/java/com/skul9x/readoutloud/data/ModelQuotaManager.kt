@@ -24,6 +24,12 @@ class ModelQuotaManager private constructor(context: Context) {
                 instance ?: ModelQuotaManager(context.applicationContext).also { instance = it }
             }
         }
+
+        fun resetInstance() {
+            synchronized(this) {
+                instance = null
+            }
+        }
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

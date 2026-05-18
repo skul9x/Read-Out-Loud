@@ -16,6 +16,7 @@ import com.skul9x.readoutloud.data.ModelManager
 import com.skul9x.readoutloud.data.ModelQuotaManager
 import com.skul9x.readoutloud.databinding.ActivitySettingsBinding
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.skul9x.readoutloud.R
 import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
@@ -95,6 +96,17 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.toolbar.setNavigationOnClickListener {
             finish()
+        }
+
+        @android.annotation.SuppressLint("ClickableViewAccessibility")
+        binding.apiKeyEditText.setOnTouchListener { view, event ->
+            if (view.id == R.id.apiKeyEditText) {
+                view.parent.requestDisallowInterceptTouchEvent(true)
+                if ((event.action and android.view.MotionEvent.ACTION_MASK) == android.view.MotionEvent.ACTION_UP) {
+                    view.parent.requestDisallowInterceptTouchEvent(false)
+                }
+            }
+            false
         }
 
         binding.settingsPasteButton.setOnClickListener {

@@ -300,7 +300,7 @@ class MainActivity : AppCompatActivity() {
         val rawText = clipboard.primaryClip?.getItemAt(0)?.text.toString()
         
         // Luôn lọc cơ bản khi dán (Local Regex) - Không tốn thời gian gọi AI tự động
-        val plainText = rawText.replace(Regex("[*#_`~]"), "")
+        val plainText = rawText.replace("---", "").replace(Regex("[*#_`~]"), "")
         binding.editText.setText(plainText)
         updateStatus("Đã dán (Lọc cơ bản)")
     }

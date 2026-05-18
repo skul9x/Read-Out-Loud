@@ -46,6 +46,7 @@ class Phase04IntegrationVerificationTest {
     @After
     fun tearDown() {
         unmockkAll()
+        ModelQuotaManager.resetInstance()
     }
 
     @Test
