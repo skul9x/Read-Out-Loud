@@ -22,7 +22,7 @@ class SettingsActivityTest {
     private lateinit var activityController: ActivityController<SettingsActivity>
 
     @Before
-    fun setUp() {
+    fun setUp() = kotlinx.coroutines.runBlocking {
         context = RuntimeEnvironment.getApplication()
         
         // Reset managers

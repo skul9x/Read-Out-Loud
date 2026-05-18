@@ -26,3 +26,8 @@ local.properties
 
 # Ensure .brain is uploaded as requested
 !.brain/
+
+# Keystores and private keys
+*.jks
+*.keystore
+keystore_base64.txt

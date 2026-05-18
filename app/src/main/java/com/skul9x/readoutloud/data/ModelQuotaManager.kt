@@ -3,6 +3,8 @@ package com.skul9x.readoutloud.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.skul9x.readoutloud.utils.SecurityUtils
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Manager for tracking model and API key quota status (Cooldown/Exhausted).
@@ -28,17 +30,20 @@ class ModelQuotaManager private constructor(context: Context) {
     
     // In-memory map for Cooldown status: PairHash -> ExpiryTimestamp
     private val cooldownMap = mutableMapOf<String, Long>()
+    
+    // Mutex for thread-safety
+    private val mutex = Mutex()
 
     /**
      * Checks if a model/key pair is currently available.
      * Also performs cleanup of expired entries.
      */
-    fun isAvailable(pairHash: String): Boolean {
+    suspend fun isAvailable(pairHash: String): Boolean = mutex.withLock {
         val now = System.currentTimeMillis()
 
         // Check Cooldown (In-memory)
         val cooldownExpiry = cooldownMap[pairHash] ?: 0L
-        if (now < cooldownExpiry) return false
+        if (now < cooldownExpiry) return@withLock false
         
         // Cleanup expired cooldown if it exists
         if (cooldownExpiry > 0) cooldownMap.remove(pairHash)
@@ -47,20 +52,20 @@ class ModelQuotaManager private constructor(context: Context) {
         val exhaustedExpiry = prefs.getLong("exhausted_$pairHash", 0L)
         if (exhaustedExpiry > 0) {
             if (now < exhaustedExpiry) {
-                return false
+                return@withLock false
             } else {
                 // Expired, clean it up
-                prefs.edit().remove("exhausted_$pairHash").apply()
+                prefs.edit().remove("exhausted_$pairHash").commit()
             }
         }
 
-        return true
+        return@withLock true
     }
 
     /**
      * Marks a model/key pair as being in Cooldown (e.g. Rate Limit 429 RPM).
      */
-    fun markCooldown(pairHash: String) {
+    suspend fun markCooldown(pairHash: String): Unit = mutex.withLock {
         val expiry = System.currentTimeMillis() + COOLDOWN_DURATION_MS
         cooldownMap[pairHash] = expiry
     }
@@ -68,16 +73,17 @@ class ModelQuotaManager private constructor(context: Context) {
     /**
      * Marks a model/key pair as Exhausted (e.g. Daily Quota 429).
      */
-    fun markExhausted(pairHash: String) {
+    suspend fun markExhausted(pairHash: String): Unit = mutex.withLock {
         val expiry = System.currentTimeMillis() + EXHAUSTED_DURATION_MS
-        prefs.edit().putLong("exhausted_$pairHash", expiry).apply()
+        prefs.edit().putLong("exhausted_$pairHash", expiry).commit()
+        Unit
     }
 
     /**
      * Cleans up all expired entries from SharedPreferences.
      * This can be called on app start or periodically.
      */
-    fun cleanupExpiredEntries() {
+    suspend fun cleanupExpiredEntries(): Unit = mutex.withLock {
         val now = System.currentTimeMillis()
         val editor = prefs.edit()
         var changed = false
@@ -91,7 +97,7 @@ class ModelQuotaManager private constructor(context: Context) {
             }
         }
         
-        if (changed) editor.apply()
+        if (changed) editor.commit()
         
         // Cleanup in-memory cooldowns
         val iterator = cooldownMap.entries.iterator()
@@ -100,13 +106,15 @@ class ModelQuotaManager private constructor(context: Context) {
                 iterator.remove()
             }
         }
+        Unit
     }
 
     /**
      * Clears all status (for debugging/testing).
      */
-    fun clearStatus() {
+    suspend fun clearStatus(): Unit = mutex.withLock {
         cooldownMap.clear()
-        prefs.edit().clear().apply()
+        prefs.edit().clear().commit()
+        Unit
     }
 }

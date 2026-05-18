@@ -18,13 +18,43 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            val storePw = System.getenv("STORE_PASSWORD")
+            val keyAl = System.getenv("KEY_ALIAS")
+            val keyPw = System.getenv("KEY_PASSWORD")
+
+            if (!keystorePath.isNullOrEmpty() && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = storePw
+                keyAlias = keyAl
+                keyPassword = keyPw
+            } else {
+                val localKeystore = rootProject.file("skul9x.jks")
+                if (localKeystore.exists()) {
+                    storeFile = localKeystore
+                    storePassword = "@Colenao123@"
+                    keyAlias = "key0"
+                    keyPassword = "@Colenao123@"
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            val localKeystore = rootProject.file("skul9x.jks")
+            if ((!keystorePath.isNullOrEmpty() && file(keystorePath).exists()) || localKeystore.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -61,6 +91,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

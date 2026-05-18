@@ -20,7 +20,7 @@ object SecurityUtils {
      * Format: model::SHA256(apiKey)
      */
     fun getPairHash(model: String, apiKey: String): String {
-        val keyHash = sha256(apiKey)
+        val keyHash = sha256(apiKey).take(16)
         return "$model::$keyHash"
     }
 }

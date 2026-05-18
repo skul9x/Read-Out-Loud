@@ -1,29 +1,35 @@
 {
-  "updated_at": "2026-03-19T14:22:00Z",
+  "updated_at": "2026-05-18T12:38:00Z",
   "working_on": {
-    "feature": "TTS Karaoke UI & Interaction",
-    "task": "Completed Phases 01-05: Double-Tap Edit, Karaoke Sync, Auto-Scroll, E2E Testing",
+    "feature": "Gemini API & Model Rotation Alignment",
+    "task": "Completed Phases 01-04: Model-First Strategy, Cooldown Delay, Physical Network Termination, UI Self-Healing & Verification",
     "status": "Archived",
     "files": [
-      "app/src/main/java/com/skul9x/readoutloud/MainActivity.kt",
-      "app/src/main/java/com/skul9x/readoutloud/TtsService.kt",
-      "app/src/test/java/com/skul9x/readoutloud/TtsKaraokeTest.kt"
+      "app/src/main/java/com/skul9x/readoutloud/data/ModelQuotaManager.kt",
+      "app/src/main/java/com/skul9x/readoutloud/data/ModelManager.kt",
+      "app/src/main/java/com/skul9x/readoutloud/data/GeminiApiClient.kt",
+      "app/src/main/java/com/skul9x/readoutloud/ui/SettingsActivity.kt",
+      "app/src/test/java/com/skul9x/readoutloud/data/Phase04IntegrationVerificationTest.kt"
     ],
-    "notes": "Full Karaoke system implemented using Spans for high efficiency. Added smart interaction guard (3s delay) for Auto-scroll. Verified build success & test coverage."
+    "notes": "Full rotation alignment complete. Implemented Model-First rotation, robust quota caching with MD5 hashing, 300ms cooldown delays, immediate network failure termination, and UI models CRUD with self-healing features. All 49 unit tests passed."
   },
   "pending_tasks": [
-    { "task": "Fine-tune scroll animation duration (user might prefer 200ms or 400ms)", "priority": "low" },
-    { "task": "Check accessibility labels for the new progress and status texts", "priority": "medium" }
+    { "task": "Integrate build artifacts with GitHub CI/CD actions workflow", "priority": "medium" },
+    { "task": "Add user-friendly network state visual banners on the main UI", "priority": "low" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-03-19T14:15:00Z", "type": "feature", "description": "Phase 04-05: Auto-scroll & E2E Integration complete.", "files": ["MainActivity.kt", "TtsKaraokeTest.kt"] },
-    { "timestamp": "2026-03-19T13:55:00Z", "type": "feature", "description": "Phase 01-03: Double-tap, TTS word sync, and Highlight logic implemented.", "files": ["MainActivity.kt", "TtsService.kt"] }
+    { "timestamp": "2026-05-18T11:45:00Z", "type": "feature", "description": "Phase 04: Added integration verification and finalized full test suite build passing.", "files": ["Phase04IntegrationVerificationTest.kt", "ModelQuotaManager.kt"] },
+    { "timestamp": "2026-05-18T11:35:00Z", "type": "feature", "description": "Phase 03: Completed Settings UI Model CRUD and Self-Healing logic.", "files": ["SettingsActivity.kt", "ModelManager.kt"] },
+    { "timestamp": "2026-05-18T11:20:00Z", "type": "feature", "description": "Phase 01-02: Implemented Model-First, Key-Second strategy, MD5 hashing, 300ms cooldown delay, and physical network failure detection.", "files": ["GeminiApiClient.kt", "ModelQuotaManager.kt", "ModelManager.kt"] }
   ],
   "errors_encountered": [
-    { "error": "Missing Robolectric dependency (androidx.test.core) caused unit test failures", "solution": "Updated libs.versions.toml and app/build.gradle.kts to include core", "resolved": true }
+    { "error": "Asynchronous SharedPreferences apply() calls caused flaky race conditions in integration tests", "solution": "Switched all writes in ModelQuotaManager from apply() to synchronous commit()", "resolved": true },
+    { "error": "Robolectric mock leakages in static classes caused downstream test suite failures", "solution": "Added global unmockkAll() in @After blocks in verification tests", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Spannable Highlighting", "reason": "Superior to re-setting text or using HTML as it preserves selection/focus and consumes less battery." },
-    { "decision": "3s Delay Protocal", "reason": "Wait for user to stop interaction before resuming auto-scroll prevents UI jumping during active reading." }
+    { "decision": "MD5 Hash Key Mapping", "reason": "MD5(ModelName_ApiKey) separates quota statuses across keys cleanly and avoids cross-key cache collision." },
+    { "decision": "Synchronous Storage Commits", "reason": "Using commit() over apply() ensures immediate I/O persistence, avoiding asynchronous state race conditions during heavy JUnit tests." },
+    { "decision": "Cooldown Delay (300ms)", "reason": "Prevents immediate server flooding on 429 RPM / 503 errors and follows Gemini API rate limit recommendations." },
+    { "decision": "Immediate Network Termination", "reason": "Encountering UnknownHostException or ConnectException implies no connection; stopping rotation immediately saves battery and request cycles." }
   ]
 }

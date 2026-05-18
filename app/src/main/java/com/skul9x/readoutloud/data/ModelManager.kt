@@ -15,9 +15,9 @@ class ModelManager private constructor(context: Context) {
         private const val KEY_MODEL_ITEMS = "gemini_model_items"
         
         val DEFAULT_MODELS = listOf(
-            "models/gemini-3.1-flash-lite-preview",
-            "models/gemini-3-flash-preview",
+            "models/gemini-3.1-flash-lite",
             "models/gemini-2.5-flash-lite",
+            "models/gemini-3-flash-preview",
             "models/gemini-2.5-flash"
         )
 
@@ -29,6 +29,12 @@ class ModelManager private constructor(context: Context) {
                 instance ?: ModelManager(context.applicationContext).also { instance = it }
             }
         }
+
+        fun resetInstance() {
+            synchronized(this) {
+                instance = null
+            }
+        }
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -37,11 +43,29 @@ class ModelManager private constructor(context: Context) {
      * Get the list of ModelItems in order of priority.
      */
     fun getModelItems(): List<ModelItem> {
-        val json = prefs.getString(KEY_MODEL_ITEMS, null) ?: return DEFAULT_MODELS.map { ModelItem(it) }
+        val json = prefs.getString(KEY_MODEL_ITEMS, null)
+        if (json == null) {
+            val defaultList = DEFAULT_MODELS.map { ModelItem(it) }
+            saveModelItems(defaultList)
+            return defaultList
+        }
         return try {
-            Json.decodeFromString<List<ModelItem>>(json)
+            val list = Json.decodeFromString<List<ModelItem>>(json)
+            if (list.isEmpty()) {
+                val defaultList = DEFAULT_MODELS.map { ModelItem(it) }
+                saveModelItems(defaultList)
+                defaultList
+            } else if (list.none { it.isEnabled }) {
+                val healed = list.map { it.copy(isEnabled = true) }
+                saveModelItems(healed)
+                healed
+            } else {
+                list
+            }
         } catch (e: Exception) {
-            DEFAULT_MODELS.map { ModelItem(it) }
+            val defaultList = DEFAULT_MODELS.map { ModelItem(it) }
+            saveModelItems(defaultList)
+            defaultList
         }
     }
 
@@ -49,7 +73,11 @@ class ModelManager private constructor(context: Context) {
      * Get the list of enabled model names for the API client.
      */
     fun getModels(): List<String> {
-        return getModelItems().filter { it.isEnabled }.map { it.name }
+        val enabled = getModelItems().filter { it.isEnabled }.map { it.name }
+        if (enabled.isEmpty()) {
+            return DEFAULT_MODELS
+        }
+        return enabled
     }
 
     /**

@@ -15,7 +15,9 @@ class ModelAdapter(
     private val apiKeyManager: ApiKeyManager,
     private val onToggle: (Int) -> Unit,
     private val onMoveUp: (Int) -> Unit,
-    private val onMoveDown: (Int) -> Unit
+    private val onMoveDown: (Int) -> Unit,
+    private val onDelete: (Int) -> Unit,
+    private val onEdit: (Int) -> Unit
 ) : RecyclerView.Adapter<ModelAdapter.ModelViewHolder>() {
 
     fun updateModels(newModels: List<ModelItem>) {
@@ -46,6 +48,13 @@ class ModelAdapter(
             binding.modelCheckBox.setOnClickListener { onToggle(position) }
             binding.moveUpButton.setOnClickListener { onMoveUp(position) }
             binding.moveDownButton.setOnClickListener { onMoveDown(position) }
+            binding.deleteButton.setOnClickListener { onDelete(position) }
+            
+            binding.modelNameText.setOnClickListener { onEdit(position) }
+            binding.root.setOnLongClickListener {
+                onEdit(position)
+                true
+            }
             
             // Disable buttons at boundaries
             binding.moveUpButton.isEnabled = position > 0
@@ -68,7 +77,7 @@ class ModelAdapter(
                 // We don't have a direct way to check cooldown vs exhausted in ModelQuotaManager 
                 // without adding methods, but isAvailable checks both.
                 // For UI, let's just show a summary.
-                if (quotaManager.isAvailable(pairHash)) {
+                if (kotlinx.coroutines.runBlocking { quotaManager.isAvailable(pairHash) }) {
                     availableCount++
                 } else {
                     // Logic to distinguish would be nice, but let's keep it simple for now

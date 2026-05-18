@@ -33,6 +33,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

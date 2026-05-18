@@ -2,6 +2,8 @@ package com.skul9x.readoutloud.data
 
 import android.content.Context
 import com.skul9x.readoutloud.utils.SecurityUtils
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -17,7 +19,7 @@ class InfrastructureTest {
     private lateinit var quotaManager: ModelQuotaManager
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking {
         context = RuntimeEnvironment.getApplication()
         modelManager = ModelManager.getInstance(context)
         quotaManager = ModelQuotaManager.getInstance(context)
@@ -31,7 +33,7 @@ class InfrastructureTest {
     fun `test ModelManager default models`() {
         val models = modelManager.getModels()
         assertEquals(4, models.size)
-        assertTrue(models.contains("models/gemini-3.1-flash-lite-preview"))
+        assertTrue(models.contains("models/gemini-3.1-flash-lite"))
     }
 
     @Test
@@ -61,7 +63,7 @@ class InfrastructureTest {
     }
 
     @Test
-    fun `test ModelQuotaManager availability`() {
+    fun `test ModelQuotaManager availability`() = runTest {
         val model = "models/gemini-3.1-flash"
         val apiKey = "REDACTED_API_KEY_TEST_1"
         val hash = SecurityUtils.getPairHash(model, apiKey)
@@ -73,7 +75,7 @@ class InfrastructureTest {
     }
 
     @Test
-    fun `test ModelQuotaManager persistence and cleanup`() {
+    fun `test ModelQuotaManager persistence and cleanup`() = runTest {
         val model = "models/gemini-3.1-flash"
         val apiKey = "REDACTED_API_KEY_TEST_2"
         val hash = SecurityUtils.getPairHash(model, apiKey)

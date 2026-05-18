@@ -38,7 +38,7 @@ class RotationLogicTest {
         // Mock default behavior
         every { modelManager.getModels() } returns listOf("model1", "model2")
         every { apiKeyManager.getApiKeys() } returns listOf("key1", "key2")
-        every { quotaManager.isAvailable(any()) } returns true
+        coEvery { quotaManager.isAvailable(any()) } returns true
         
         apiClient = spyk(GeminiApiClient(context, apiKeyManager, modelManager, quotaManager))
     }
@@ -49,7 +49,7 @@ class RotationLogicTest {
         coEvery { apiClient.tryGenerateContent("key1", "model1", any()) } returns GeminiApiClient.ApiResult.RateLimited
         coEvery { apiClient.tryGenerateContent("key2", "model1", any()) } returns GeminiApiClient.ApiResult.Success("Cleaned text")
         
-        every { quotaManager.markCooldown(any()) } just Runs
+        coEvery { quotaManager.markCooldown(any()) } just Runs
 
         val result = apiClient.cleanTextWithGemini("Dirty text")
         
@@ -58,7 +58,7 @@ class RotationLogicTest {
         assertEquals("model1", result.model)
         
         // Verify key1 was marked as cooldown
-        verify { quotaManager.markCooldown(any()) }
+        coVerify { quotaManager.markCooldown(any()) }
     }
 
     @Test
@@ -68,7 +68,7 @@ class RotationLogicTest {
         // First key for model2 succeeds
         coEvery { apiClient.tryGenerateContent("key1", "model2", any()) } returns GeminiApiClient.ApiResult.Success("Cleaned text model 2")
         
-        every { quotaManager.markExhausted(any()) } just Runs
+        coEvery { quotaManager.markExhausted(any()) } just Runs
 
         val result = apiClient.cleanTextWithGemini("Dirty text")
         
@@ -77,7 +77,7 @@ class RotationLogicTest {
         assertEquals("model2", result.model)
         
         // Verify keys for model1 were marked as exhausted
-        verify(atLeast = 1) { quotaManager.markExhausted(any()) }
+        coVerify(atLeast = 1) { quotaManager.markExhausted(any()) }
     }
 
     @Test
@@ -99,7 +99,7 @@ class RotationLogicTest {
     @Test
     fun `test rotation - all exhausted returns AllQuotaExhausted`() = runBlocking {
         coEvery { apiClient.tryGenerateContent(any(), any(), any()) } returns GeminiApiClient.ApiResult.QuotaExceeded
-        every { quotaManager.markExhausted(any()) } just Runs
+        coEvery { quotaManager.markExhausted(any()) } just Runs
         
         val result = apiClient.cleanTextWithGemini("text")
         

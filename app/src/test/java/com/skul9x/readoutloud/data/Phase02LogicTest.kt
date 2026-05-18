@@ -37,7 +37,7 @@ class Phase02LogicTest {
         // Default models and keys
         every { modelManager.getModels() } returns listOf("model-1", "model-2")
         every { apiKeyManager.getApiKeys() } returns emptyList()
-        every { quotaManager.isAvailable(any<String>()) } returns true
+        coEvery { quotaManager.isAvailable(any<String>()) } returns true
         
         // Initialize client
         geminiApiClient = spyk(GeminiApiClient(context, apiKeyManager, modelManager, quotaManager))
@@ -57,6 +57,9 @@ class Phase02LogicTest {
         coEvery { geminiApiClient.tryGenerateContent("key-1", "model-1", any()) } returns GeminiApiClient.ApiResult.RateLimited
         coEvery { geminiApiClient.tryGenerateContent("key-2", "model-1", any()) } returns GeminiApiClient.ApiResult.QuotaExceeded
         coEvery { geminiApiClient.tryGenerateContent("key-1", "model-2", any()) } returns GeminiApiClient.ApiResult.Success("Success text")
+        
+        coEvery { quotaManager.markCooldown(any()) } just Runs
+        coEvery { quotaManager.markExhausted(any()) } just Runs
 
         val result = geminiApiClient.cleanTextWithGemini("Input")
 
@@ -65,8 +68,8 @@ class Phase02LogicTest {
         assertEquals("model-2", result.model)
 
         // Verify quota manager calls
-        verify { quotaManager.markCooldown(com.skul9x.readoutloud.utils.SecurityUtils.getPairHash("model-1", "key-1")) }
-        verify { quotaManager.markExhausted(com.skul9x.readoutloud.utils.SecurityUtils.getPairHash("model-1", "key-2")) }
+        coVerify { quotaManager.markCooldown(com.skul9x.readoutloud.utils.SecurityUtils.getPairHash("model-1", "key-1")) }
+        coVerify { quotaManager.markExhausted(com.skul9x.readoutloud.utils.SecurityUtils.getPairHash("model-1", "key-2")) }
     }
 
     @Test
@@ -76,8 +79,8 @@ class Phase02LogicTest {
         
         // Scenario: model-1/key-1 is NOT available
         val hash = com.skul9x.readoutloud.utils.SecurityUtils.getPairHash("model-1", "key-1")
-        every { quotaManager.isAvailable(hash) } returns false
-        every { quotaManager.isAvailable(not(hash)) } returns true
+        coEvery { quotaManager.isAvailable(hash) } returns false
+        coEvery { quotaManager.isAvailable(not(hash)) } returns true
 
         coEvery { geminiApiClient.tryGenerateContent("key-1", "model-2", any()) } returns GeminiApiClient.ApiResult.Success("Success from model 2")
 
@@ -112,7 +115,7 @@ class Phase02LogicTest {
     fun `test IOException triggers retry`() = runBlocking {
         val keys = listOf("key-1")
         every { apiKeyManager.getApiKeys() } returns keys
-        every { quotaManager.isAvailable(any()) } returns true
+        coEvery { quotaManager.isAvailable(any()) } returns true
 
         // First call fails with IOException, second succeeds
         coEvery { 

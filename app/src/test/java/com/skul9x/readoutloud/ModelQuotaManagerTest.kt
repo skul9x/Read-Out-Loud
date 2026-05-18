@@ -3,6 +3,8 @@ package com.skul9x.readoutloud
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.skul9x.readoutloud.data.ModelQuotaManager
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -16,31 +18,31 @@ class ModelQuotaManagerTest {
     private lateinit var quotaManager: ModelQuotaManager
 
     @Before
-    fun setup() {
+    fun setup() = runBlocking {
         context = ApplicationProvider.getApplicationContext()
         quotaManager = ModelQuotaManager.getInstance(context)
         quotaManager.clearStatus()
     }
 
     @Test
-    fun `test initial availability`() {
+    fun `test initial availability`() = runTest {
         assertTrue(quotaManager.isAvailable("test_pair"))
     }
 
     @Test
-    fun `test mark cooldown`() {
+    fun `test mark cooldown`() = runTest {
         quotaManager.markCooldown("test_pair")
         assertFalse(quotaManager.isAvailable("test_pair"))
     }
 
     @Test
-    fun `test mark exhausted`() {
+    fun `test mark exhausted`() = runTest {
         quotaManager.markExhausted("test_pair")
         assertFalse(quotaManager.isAvailable("test_pair"))
     }
 
     @Test
-    fun `test cleanup expired entries`() {
+    fun `test cleanup expired entries`() = runTest {
         // We can't easily test time-based expiry without mocking System.currentTimeMillis()
         // but we can verify it doesn't crash and clears everything if we call clearStatus
         quotaManager.markCooldown("pair1")

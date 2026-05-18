@@ -19,6 +19,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.net.ConnectException
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
@@ -37,15 +39,6 @@ class GeminiApiClient(
     companion object {
         private const val TAG = "GeminiApiClient"
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
-
-        // Models to fallback between
-        private val MODELS = listOf(
-            "models/gemini-3-flash-preview",
-            "models/gemini-2.5-flash",
-            "models/gemini-2.5-flash-lite",
-            "models/gemini-flash-latest",
-            "models/gemini-flash-lite-latest"
-        )
     }
     private val stateMutex = Mutex()
     
@@ -83,8 +76,6 @@ class GeminiApiClient(
             if (keys.isEmpty()) return@withContext GeminiResult.NoApiKeys
             if (models.isEmpty()) return@withContext GeminiResult.Error("No models configured")
 
-            hasStartedStreaming = false
-
             // Requirement 10: Outer (Models), Inner (Keys)
             for (mIndex in models.indices) {
                 val model = models[mIndex]
@@ -102,8 +93,17 @@ class GeminiApiClient(
                     Log.d(TAG, "Trying Model: $model | API key ${kIndex + 1}/${keys.size}")
 
                     // Requirement 18: retryWithBackoff only for IOException before streaming starts
-                    val result = retryWithBackoff {
-                        tryGenerateContent(apiKey, model, content)
+                    val result = try {
+                        retryWithBackoff {
+                            tryGenerateContent(apiKey, model, content)
+                        }
+                    } catch (e: UnknownHostException) {
+                        return@withContext GeminiResult.Error("Lỗi kết nối mạng vật lý. Vui lòng kiểm tra kết nối internet của bạn.")
+                    } catch (e: ConnectException) {
+                        return@withContext GeminiResult.Error("Lỗi kết nối mạng vật lý. Vui lòng kiểm tra kết nối internet của bạn.")
+                    } catch (e: IOException) {
+                        if (hasStartedStreaming) throw e
+                        ApiResult.Error("IOException: ${e.message}")
                     }
 
                     when (result) {
@@ -122,11 +122,13 @@ class GeminiApiClient(
                         is ApiResult.RateLimited -> {
                             // Requirement 13: 429 RPM/Rate limit -> markCooldown
                             quotaManager.markCooldown(pairHash)
+                            delay(300)
                             continue
                         }
                         is ApiResult.ServiceUnavailable -> {
                             // Requirement 15: 503 -> markCooldown
                             quotaManager.markCooldown(pairHash)
+                            delay(300)
                             continue
                         }
                         is ApiResult.ModelNotFound -> {
@@ -155,6 +157,10 @@ class GeminiApiClient(
         repeat(maxRetries) { attempt ->
             try {
                 return block()
+            } catch (e: UnknownHostException) {
+                throw e
+            } catch (e: ConnectException) {
+                throw e
             } catch (e: IOException) {
                 if (hasStartedStreaming || attempt == maxRetries - 1) throw e
                 Log.w(TAG, "IOException on attempt ${attempt + 1}, retrying in $currentDelay ms...")
@@ -305,9 +311,11 @@ $content
         val keys = apiKeys
         if (keys.isEmpty()) return "Chưa có API key"
         
+        val models = modelManager.getModels()
         val safeKeyIndex = if (currentApiKeyIndex < keys.size) currentApiKeyIndex else 0
-        val safeModelIndex = if (currentModelIndex < MODELS.size) currentModelIndex else 0
-        return "API ${safeKeyIndex + 1}/${keys.size}, Model: ${MODELS[safeModelIndex].substringAfter("/")}"
+        val safeModelIndex = if (models.isNotEmpty() && currentModelIndex < models.size) currentModelIndex else 0
+        val modelName = if (models.isNotEmpty()) models[safeModelIndex].substringAfter("/") else "Không có model"
+        return "API ${safeKeyIndex + 1}/${keys.size}, Model: $modelName"
     }
 
     sealed class ApiResult {

@@ -17,6 +17,8 @@ class GeminiRotationTest {
 
     private lateinit var context: Context
     private lateinit var apiKeyManager: ApiKeyManager
+    private lateinit var modelManager: ModelManager
+    private lateinit var quotaManager: ModelQuotaManager
     private lateinit var geminiApiClient: GeminiApiClient
 
     @Before
@@ -24,7 +26,12 @@ class GeminiRotationTest {
         println("Setting up GeminiRotationTest...")
         context = mockk(relaxed = true)
         apiKeyManager = mockk()
+        modelManager = mockk()
+        quotaManager = mockk(relaxed = true)
+        
         every { apiKeyManager.getApiKeys() } returns emptyList()
+        every { modelManager.getModels() } returns listOf("models/gemini-3.1-flash-lite", "models/gemini-2.5-flash-lite")
+        coEvery { quotaManager.isAvailable(any()) } returns true
 
         // Mock Android Log
         mockkStatic(Log::class)
@@ -33,8 +40,8 @@ class GeminiRotationTest {
         every { Log.e(any<String>(), any<String>()) } returns 0
         every { Log.e(any<String>(), any<String>(), any<Throwable>()) } returns 0
 
-        // Initialize client with mocked ApiKeyManager (DI)
-        geminiApiClient = spyk(GeminiApiClient(context, apiKeyManager))
+        // Initialize client with mocked dependencies (DI)
+        geminiApiClient = spyk(GeminiApiClient(context, apiKeyManager, modelManager, quotaManager))
     }
 
     @Test
@@ -61,7 +68,7 @@ class GeminiRotationTest {
         // 4. Verify
         assertTrue(result is GeminiApiClient.GeminiResult.Success)
         assertEquals("Cleaned text from Key 2", (result as GeminiApiClient.GeminiResult.Success).text)
-        assertEquals("models/gemini-2.0-flash", (result as GeminiApiClient.GeminiResult.Success).model)
+        assertEquals("models/gemini-3.1-flash-lite", (result as GeminiApiClient.GeminiResult.Success).model)
         
         // Verify current status shows Key 2 was the winner
         assertTrue(geminiApiClient.getCurrentStatus().contains("API 2/2"))
@@ -80,12 +87,12 @@ class GeminiRotationTest {
         // 2. Mock behavior: 
         // First model fails with ModelNotFound
         coEvery { 
-            geminiApiClient.tryGenerateContent("key-1", "models/gemini-2.0-flash", any()) 
+            geminiApiClient.tryGenerateContent("key-1", "models/gemini-3.1-flash-lite", any()) 
         } returns GeminiApiClient.ApiResult.ModelNotFound
 
         // Second model succeeds
         coEvery { 
-            geminiApiClient.tryGenerateContent("key-1", "models/gemini-2.0-flash-lite-preview-02-05", any()) 
+            geminiApiClient.tryGenerateContent("key-1", "models/gemini-2.5-flash-lite", any()) 
         } returns GeminiApiClient.ApiResult.Success("Success from second model")
 
         // 3. Execute
@@ -94,7 +101,7 @@ class GeminiRotationTest {
         // 4. Verify
         assertTrue(result is GeminiApiClient.GeminiResult.Success)
         assertEquals("Success from second model", (result as GeminiApiClient.GeminiResult.Success).text)
-        assertEquals("models/gemini-2.0-flash-lite-preview-02-05", (result as GeminiApiClient.GeminiResult.Success).model)
+        assertEquals("models/gemini-2.5-flash-lite", (result as GeminiApiClient.GeminiResult.Success).model)
     }
 }
 

@@ -72,6 +72,13 @@ class SettingsActivity : AppCompatActivity() {
             onMoveDown = { index ->
                 modelManager.moveDown(index)
                 refreshModelsList()
+            },
+            onDelete = { index ->
+                modelManager.removeModel(index)
+                refreshModelsList()
+            },
+            onEdit = { index ->
+                showEditModelDialog(index)
             }
         )
 
@@ -94,9 +101,108 @@ class SettingsActivity : AppCompatActivity() {
             pasteKeysFromClipboard()
         }
 
+        binding.addModelButton.setOnClickListener {
+            showAddModelDialog()
+        }
+
+        binding.resetModelsButton.setOnClickListener {
+            modelManager.resetToDefault()
+            refreshModelsList()
+            Toast.makeText(this, "Đã khôi phục danh sách mặc định", Toast.LENGTH_SHORT).show()
+        }
+
         binding.saveButton.setOnClickListener {
             saveKeys()
         }
+    }
+
+    private fun showAddModelDialog() {
+        val paddingDp = 20
+        val density = resources.displayMetrics.density
+        val paddingPx = (paddingDp * density).toInt()
+        
+        val container = android.widget.FrameLayout(this)
+        val editText = com.google.android.material.textfield.TextInputEditText(this).apply {
+            hint = "Ví dụ: models/gemini-2.5-pro"
+            setSingleLine(true)
+        }
+        val layoutParams = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            leftMargin = paddingPx
+            rightMargin = paddingPx
+            topMargin = paddingPx / 2
+            bottomMargin = paddingPx / 2
+        }
+        container.addView(editText, layoutParams)
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Thêm mô hình mới")
+            .setView(container)
+            .setPositiveButton("Thêm") { dialog, _ ->
+                val modelName = editText.text.toString().trim()
+                if (modelName.isNotEmpty()) {
+                    modelManager.addModel(modelName)
+                    refreshModelsList()
+                    Toast.makeText(this, "Đã thêm mô hình: $modelName", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Tên mô hình không được để trống", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Hủy") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showEditModelDialog(index: Int) {
+        val currentItems = modelManager.getModelItems()
+        if (index !in currentItems.indices) return
+        val currentItem = currentItems[index]
+
+        val paddingDp = 20
+        val density = resources.displayMetrics.density
+        val paddingPx = (paddingDp * density).toInt()
+        
+        val container = android.widget.FrameLayout(this)
+        val editText = com.google.android.material.textfield.TextInputEditText(this).apply {
+            setText(currentItem.name)
+            setSelection(currentItem.name.length)
+            setSingleLine(true)
+        }
+        val layoutParams = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            leftMargin = paddingPx
+            rightMargin = paddingPx
+            topMargin = paddingPx / 2
+            bottomMargin = paddingPx / 2
+        }
+        container.addView(editText, layoutParams)
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Chỉnh sửa mô hình")
+            .setView(container)
+            .setPositiveButton("Lưu") { dialog, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    val updatedItems = currentItems.toMutableList()
+                    updatedItems[index] = currentItem.copy(name = newName)
+                    modelManager.saveModelItems(updatedItems)
+                    refreshModelsList()
+                    Toast.makeText(this, "Đã cập nhật mô hình", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Tên mô hình không được để trống", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Hủy") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun pasteKeysFromClipboard() {
