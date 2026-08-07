@@ -63,30 +63,79 @@
                 app:tint="?attr/colorOnSurface" />
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <!-- AI Text Button Card (M3 Elevated) -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- AI Action Buttons Grid (50/50 Dual Buttons: AI Text & Tóm tắt) -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
-            android:layout_marginEnd="16dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer"
-            app:cardCornerRadius="28dp"
-            app:strokeWidth="0dp">
+            android:layout_marginEnd="12dp"
+            android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/aiTextButton"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="AI text"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:icon="@drawable/ic_auto_fix"
-                app:iconGravity="textStart"
-                app:iconSize="24dp"
-                app:cornerRadius="24dp" />
-        </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="28dp"
+                app:strokeWidth="0dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/aiTextButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="AI text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMinTextSize="10sp"
+                    app:autoSizeMaxTextSize="15sp"
+                    app:autoSizeStepGranularity="1sp"
+                    app:icon="@drawable/ic_auto_fix"
+                    app:iconGravity="textStart"
+                    app:iconSize="20dp"
+                    app:iconPadding="6dp"
+                    app:cornerRadius="24dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="28dp"
+                app:strokeWidth="0dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/summarizeButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="Tóm tắt"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMinTextSize="10sp"
+                    app:autoSizeMaxTextSize="15sp"
+                    app:autoSizeStepGranularity="1sp"
+                    app:icon="@drawable/ic_summarize"
+                    app:iconGravity="textStart"
+                    app:iconSize="20dp"
+                    app:iconPadding="6dp"
+                    app:cornerRadius="24dp" />
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
         <!-- Main Action Grid -->
         <LinearLayout

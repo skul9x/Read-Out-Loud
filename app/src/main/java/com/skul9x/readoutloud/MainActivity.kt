@@ -174,6 +174,16 @@ class MainActivity : AppCompatActivity() {
             processWithAI(textToPolish)
         }
 
+        // Summarize Action
+        binding.summarizeButton.setOnClickListener {
+            val textToSummarize = binding.editText.text.toString()
+            if (textToSummarize.isBlank()) {
+                Toast.makeText(this, "Không có nội dung để tóm tắt", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            processSummarizeWithAI(textToSummarize)
+        }
+
         // Action Cards (Modern UI)
         binding.pasteCard.setOnClickListener { pasteFromClipboard() }
         binding.readCard.setOnClickListener { checkPermissionsAndRead() }
@@ -360,6 +370,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun processSummarizeWithAI(text: String) {
+        val apiKeys = ApiKeyManager.getInstance(this).getApiKeys()
+        if (apiKeys.isEmpty()) {
+            Toast.makeText(this, "Chưa cấu hình Gemini API Key", Toast.LENGTH_LONG).show()
+            updateStatus("Gemini: Không có API Key")
+            return
+        }
+
+        updateStatus("Gemini đang tóm tắt...")
+        setLoading(true)
+
+        lifecycleScope.launch {
+            try {
+                geminiApiClient.refreshApiKeys()
+                val result = geminiApiClient.summarizeTextWithGemini(text)
+                
+                withContext(Dispatchers.Main) {
+                    setLoading(false)
+                    when (result) {
+                        is GeminiApiClient.GeminiResult.Success -> {
+                            binding.editText.setText(result.text)
+                            updateStatus("Gemini: Tóm tắt xong (${result.model.substringAfter("/")})")
+                        }
+                        else -> {
+                            val msg = result.getFinalText()
+                            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_LONG).show()
+                            updateStatus("Lỗi Gemini")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                setLoading(false)
+                updateStatus("Lỗi hệ thống")
+            }
+        }
+    }
+
     private fun updateStatus(status: String) {
         binding.statusText.text = status
     }
@@ -440,6 +487,7 @@ class MainActivity : AppCompatActivity() {
         binding.pasteCard.isEnabled = !isLoading
         binding.readCard.isEnabled = !isLoading
         binding.aiTextButton.isEnabled = !isLoading
+        binding.summarizeButton.isEnabled = !isLoading
         
         binding.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
         

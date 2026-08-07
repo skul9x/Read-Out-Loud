@@ -69,6 +69,21 @@ class GeminiApiClient(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun cleanTextWithGemini(content: String): GeminiResult {
+        return executeGeminiRequest { apiKey, model ->
+            tryGenerateContent(apiKey, model, content)
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun summarizeTextWithGemini(content: String): GeminiResult {
+        return executeGeminiRequest { apiKey, model ->
+            tryGenerateContentWithPrompt(apiKey, model, buildSummarizePrompt(content))
+        }
+    }
+
+    private suspend fun executeGeminiRequest(
+        callApi: suspend (apiKey: String, model: String) -> ApiResult
+    ): GeminiResult {
         return withContext(Dispatchers.IO) {
             val keys = apiKeyManager.getApiKeys().toList()
             val models = modelManager.getModels()
@@ -95,7 +110,7 @@ class GeminiApiClient(
                     // Requirement 18: retryWithBackoff only for IOException before streaming starts
                     val result = try {
                         retryWithBackoff {
-                            tryGenerateContent(apiKey, model, content)
+                            callApi(apiKey, model)
                         }
                     } catch (e: UnknownHostException) {
                         return@withContext GeminiResult.Error("Lỗi kết nối mạng vật lý. Vui lòng kiểm tra kết nối internet của bạn.")
@@ -173,10 +188,14 @@ class GeminiApiClient(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal suspend fun tryGenerateContent(apiKey: String, model: String, content: String): ApiResult {
+        return tryGenerateContentWithPrompt(apiKey, model, buildCleanPrompt(content))
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    internal suspend fun tryGenerateContentWithPrompt(apiKey: String, model: String, prompt: String): ApiResult {
         return try {
             coroutineContext.ensureActive()
             
-            val prompt = buildCleanPrompt(content)
             val requestBody = buildRequestBody(prompt)
             
             val request = Request.Builder()
@@ -239,6 +258,22 @@ class GeminiApiClient(
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Unknown error")
         }
+    }
+
+    @JvmName("buildSummarizePrompt")
+    internal fun buildSummarizePrompt(content: String): String {
+        return """
+Bạn là trợ lý AI chuyên tóm tắt tin tức cho người lái xe. Nhiệm vụ của bạn là tóm tắt nội dung sau thành các ý chính quan trọng nhất, ngắn gọn, súc tích.
+
+YÊU CẦU BẮT BUỘC:
+1. Chỉ trả về nội dung tóm tắt dưới dạng danh sách đánh số (1. 2. 3...).
+2. TUYỆT ĐỐI KHÔNG có bất kỳ câu dẫn dắt, chào hỏi, rào đón hay kết thúc nào (Ví dụ: KHÔNG viết "Dưới đây là tóm tắt...", "Thưa giám đốc...", "Chào bạn...", "Tuyệt vời...").
+3. Vào thẳng nội dung chính ngay lập tức.
+4. Ngôn ngữ tự nhiên, dễ nghe khi đọc bằng giọng nói.
+
+Nội dung cần tóm tắt:
+$content.
+""".trim()
     }
 
     private fun buildCleanPrompt(content: String): String {
