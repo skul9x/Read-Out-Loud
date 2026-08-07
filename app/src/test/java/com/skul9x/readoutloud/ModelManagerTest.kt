@@ -26,6 +26,14 @@ class ModelManagerTest {
     @Test
     fun `test initial models are default`() {
         val models = modelManager.getModels()
+        assertEquals(5, models.size)
+        assertEquals(listOf(
+            "models/gemini-3.5-flash-lite",
+            "models/gemini-3.1-flash-lite",
+            "models/gemini-2.5-flash-lite",
+            "models/gemini-3.6-flash",
+            "models/gemini-2.5-flash"
+        ), models)
         assertEquals(ModelManager.DEFAULT_MODELS, models)
     }
 

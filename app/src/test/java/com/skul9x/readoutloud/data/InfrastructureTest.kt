@@ -32,20 +32,20 @@ class InfrastructureTest {
     @Test
     fun `test ModelManager default models`() {
         val models = modelManager.getModels()
-        assertEquals(4, models.size)
+        assertEquals(5, models.size)
         assertTrue(models.contains("models/gemini-3.1-flash-lite"))
     }
 
     @Test
     fun `test ModelManager ModelItem persistence`() {
         val items = modelManager.getModelItems()
-        assertEquals(4, items.size)
+        assertEquals(5, items.size)
         assertTrue(items[0].isEnabled)
         
         // Toggle first model
         modelManager.toggleModel(0)
         assertFalse("First model should be disabled", modelManager.getModelItems()[0].isEnabled)
-        assertEquals("Should have 3 enabled models", 3, modelManager.getModels().size)
+        assertEquals("Should have 4 enabled models", 4, modelManager.getModels().size)
     }
 
     @Test

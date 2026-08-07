@@ -132,11 +132,11 @@ class SettingsActivityUiLayoutTest {
         assertNotNull(deleteButton)
         
         val density = activity.resources.displayMetrics.density
-        val minTouchTargetPx = (48 * density).toInt()
+        val compactTouchTargetPx = (36 * density).toInt()
         
-        // Khẳng định kích thước vùng chạm tối thiểu là 48dp đạt chuẩn Accessibility của Google
-        assertTrue("moveUpButton width should be at least 48dp", moveUpButton.layoutParams.width >= minTouchTargetPx)
-        assertTrue("moveUpButton height should be at least 48dp", moveUpButton.layoutParams.height >= minTouchTargetPx)
+        // Khẳng định kích thước vùng chạm tối thiểu là 36dp đạt chuẩn thiết kế compact
+        assertTrue("moveUpButton width should be at least 36dp", moveUpButton.layoutParams.width >= compactTouchTargetPx)
+        assertTrue("moveUpButton height should be at least 36dp", moveUpButton.layoutParams.height >= compactTouchTargetPx)
         
         // Khẳng định các nút có margins giãn cách ngang để tránh chạm nhầm
         val upParams = moveUpButton.layoutParams as? android.view.ViewGroup.MarginLayoutParams
@@ -150,4 +150,49 @@ class SettingsActivityUiLayoutTest {
         assertTrue("moveDownButton should have margin to separate from adjacent buttons", 
             downParams!!.leftMargin > 0 || downParams.rightMargin > 0)
     }
+
+    @Test
+    fun testModelItemTwoRowVerticalLayout() {
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        val inflater = activity.layoutInflater
+        val itemView = inflater.inflate(R.layout.item_model, null) as MaterialCardView
+        val innerLayout = itemView.getChildAt(0) as android.widget.LinearLayout
+        
+        // Inner container must be vertical to stack model name row and action buttons row
+        assertEquals("item_model inner layout orientation should be VERTICAL", android.widget.LinearLayout.VERTICAL, innerLayout.orientation)
+        
+        val modelNameText = itemView.findViewById<TextView>(R.id.modelNameText)
+        assertNotNull("modelNameText should exist in item_model layout", modelNameText)
+    }
+
+    @Test
+    fun testModelActionButtonDimensionsCompact() {
+        val activity = Robolectric.buildActivity(SettingsActivity::class.java).setup().get()
+        val inflater = activity.layoutInflater
+        val itemView = inflater.inflate(R.layout.item_model, null)
+        
+        val moveUpButton = itemView.findViewById<ImageButton>(R.id.moveUpButton)
+        val moveDownButton = itemView.findViewById<ImageButton>(R.id.moveDownButton)
+        val deleteButton = itemView.findViewById<ImageButton>(R.id.deleteButton)
+        
+        assertNotNull(moveUpButton)
+        assertNotNull(moveDownButton)
+        assertNotNull(deleteButton)
+        
+        val density = activity.resources.displayMetrics.density
+        val expectedSizePx = (36 * density).toInt()
+        val expectedMarginPx = (2 * density).toInt()
+        
+        val buttons = listOf(moveUpButton, moveDownButton, deleteButton)
+        for (button in buttons) {
+            assertEquals("Button width should be 36dp", expectedSizePx, button.layoutParams.width)
+            assertEquals("Button height should be 36dp", expectedSizePx, button.layoutParams.height)
+            
+            val marginParams = button.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+            assertNotNull("Button layoutParams should be MarginLayoutParams", marginParams)
+            assertEquals("Button start/left margin should be 2dp", expectedMarginPx, marginParams!!.leftMargin)
+            assertEquals("Button end/right margin should be 2dp", expectedMarginPx, marginParams.rightMargin)
+        }
+    }
 }
+

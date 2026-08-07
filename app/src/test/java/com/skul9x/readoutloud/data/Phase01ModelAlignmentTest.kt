@@ -38,9 +38,10 @@ class Phase01ModelAlignmentTest {
     @Test
     fun testDefaultModelsPriority() {
         val expectedModels = listOf(
+            "models/gemini-3.5-flash-lite",
             "models/gemini-3.1-flash-lite",
             "models/gemini-2.5-flash-lite",
-            "models/gemini-3-flash-preview",
+            "models/gemini-3.6-flash",
             "models/gemini-2.5-flash"
         )
         assertEquals(expectedModels, ModelManager.DEFAULT_MODELS)
@@ -49,10 +50,11 @@ class Phase01ModelAlignmentTest {
     @Test
     fun testModelManagerDefaultPriorityOnFirstStart() {
         val modelNames = modelManager.getModels()
-        assertEquals(4, modelNames.size)
-        assertEquals("models/gemini-3.1-flash-lite", modelNames[0])
-        assertEquals("models/gemini-2.5-flash-lite", modelNames[1])
-        assertEquals("models/gemini-3-flash-preview", modelNames[2])
-        assertEquals("models/gemini-2.5-flash", modelNames[3])
+        assertEquals(5, modelNames.size)
+        assertEquals("models/gemini-3.5-flash-lite", modelNames[0])
+        assertEquals("models/gemini-3.1-flash-lite", modelNames[1])
+        assertEquals("models/gemini-2.5-flash-lite", modelNames[2])
+        assertEquals("models/gemini-3.6-flash", modelNames[3])
+        assertEquals("models/gemini-2.5-flash", modelNames[4])
     }
 }

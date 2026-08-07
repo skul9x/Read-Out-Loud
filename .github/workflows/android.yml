@@ -34,6 +34,37 @@ jobs:
       run: |
         echo "$ENCODED_KEYSTORE" | base64 --decode > app/skul9x.jks
 
+    # 🏷️ TỰ ĐỘNG TÍNH VERSION & TÊN APP: Lấy release mới nhất và slugify tên repo (vd: My App -> my-app)
+    - name: Determine Next Release Version
+      id: versioning
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Tự động chuyển tên Repository thành tên app viết thường phân cách bằng dấu gạch ngang '-'
+        REPO_NAME="${{ github.event.repository.name }}"
+        APP_NAME=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]' | tr '_' '-' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-|-$//g')
+        echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+
+        LATEST_TAG=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name // empty')
+        
+        if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+          NEW_TAG="v1.0"
+        else
+          MAJOR=$(echo "$LATEST_TAG" | sed -E 's/^v?([0-9]+)\.([0-9]+).*/\1/')
+          MINOR=$(echo "$LATEST_TAG" | sed -E 's/^v?([0-9]+)\.([0-9]+).*/\2/')
+          
+          if [ -z "$MAJOR" ] || [ -z "$MINOR" ]; then
+            NEW_TAG="v1.0"
+          else
+            NEXT_MINOR=$((MINOR + 1))
+            NEW_TAG="v${MAJOR}.${NEXT_MINOR}"
+          fi
+        fi
+        
+        echo "Selected next release tag: $NEW_TAG for app: $APP_NAME"
+        echo "tag_name=$NEW_TAG" >> $GITHUB_OUTPUT
+
     # 🚀 BUILD & KÝ SỐ: Biên dịch bản Release và tự động ký bằng file jks vừa giải mã
     - name: Build Release APK with Gradle
       env:
@@ -43,28 +74,23 @@ jobs:
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: ./gradlew :app:assembleRelease
 
-    # 🏷️ ĐỔI TÊN FILE APK: Đổi tên file APK thành 'Read-Out-Loud_v1.1.apk' theo đúng yêu cầu đặc tả
+    # 🏷️ ĐỔI TÊN FILE APK: Đổi tên file APK theo chuẩn '<app-name>-v1.x.apk'
     - name: Rename Release APK
       run: |
-        mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/Read-Out-Loud_v1.1.apk
+        mv app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/${{ steps.versioning.outputs.app_name }}-${{ steps.versioning.outputs.tag_name }}.apk"
 
-    # 🚀 TẠO GITHUB RELEASE VÀ UPLOAD ASSET: Tạo release v1.1 và upload file Read-Out-Loud_v1.1.apk
+    # 🚀 TẠO GITHUB RELEASE VÀ UPLOAD ASSET: Tạo release tự động và upload file APK
     - name: Create Release and Upload Asset
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.1
-        name: "Release v1.1"
+        tag_name: ${{ steps.versioning.outputs.tag_name }}
+        name: "Release ${{ steps.versioning.outputs.tag_name }}"
         body: |
-          Chào mừng đến với phiên bản **Read-Out-Loud v1.1**! 🎉
+          Chào mừng đến với phiên bản **${{ steps.versioning.outputs.app_name }} ${{ steps.versioning.outputs.tag_name }}**! 🎉
           
-          Phiên bản này mang tới các nâng cấp và cải tiến vượt trội:
-          - 🔄 **Hệ thống xoay tua mô hình Gemini thế hệ mới:** Tự động xoay tua API keys và Models theo chiến lược Model-First, Key-Second thông minh.
-          - 🧠 **Cơ chế tự vá lỗi (Self-Healing):** Khôi phục danh sách mô hình mặc định ngay lập tức khi danh sách trống hoặc tất cả bị vô hiệu hóa.
-          - ⏳ **Độ trễ Cooldown thông minh:** Trì hoãn 300ms khi gặp lỗi 429 RPM/503 để bảo vệ tài nguyên.
-          - 🔌 **Ngắt kết nối khẩn cấp:** Dừng xoay tua ngay khi phát hiện mất mạng vật lý (UnknownHostException).
-          - 🎨 **Giao diện Material 3 đẳng cấp:** Hỗ trợ Dark theme, hiệu ứng Karaoke đồng bộ theo từ, tự động cuộn thông minh.
+          Phiên bản này mang tới các nâng cấp và cải tiến vượt trội.
         draft: false
         prerelease: false
-        files: app/build/outputs/apk/release/Read-Out-Loud_v1.1.apk
+        files: app/build/outputs/apk/release/${{ steps.versioning.outputs.app_name }}-${{ steps.versioning.outputs.tag_name }}.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

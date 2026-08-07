@@ -2,6 +2,7 @@ package com.skul9x.readoutloud
 
 import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.IntentFilter
@@ -177,6 +178,7 @@ class MainActivity : AppCompatActivity() {
         binding.pasteCard.setOnClickListener { pasteFromClipboard() }
         binding.readCard.setOnClickListener { checkPermissionsAndRead() }
         binding.stopCard.setOnClickListener { stopReading() }
+        binding.copyTextButton.setOnClickListener { copyToClipboard() }
 
         binding.editText.movementMethod = ScrollingMovementMethod.getInstance()
         
@@ -303,6 +305,19 @@ class MainActivity : AppCompatActivity() {
         val plainText = rawText.replace("---", "").replace(Regex("[*#_`~]"), "")
         binding.editText.setText(plainText)
         updateStatus("Đã dán (Lọc cơ bản)")
+    }
+
+    private fun copyToClipboard() {
+        val text = binding.editText.text?.toString() ?: ""
+        if (text.isBlank()) {
+            Toast.makeText(this, "Không có văn bản để sao chép", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Copied Text", text)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "Đã sao chép văn bản vào bộ nhớ tạm", Toast.LENGTH_SHORT).show()
     }
 
     private fun processWithAI(text: String) {

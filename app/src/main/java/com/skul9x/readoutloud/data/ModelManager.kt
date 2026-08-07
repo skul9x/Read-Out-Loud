@@ -15,9 +15,10 @@ class ModelManager private constructor(context: Context) {
         private const val KEY_MODEL_ITEMS = "gemini_model_items"
         
         val DEFAULT_MODELS = listOf(
+            "models/gemini-3.5-flash-lite",
             "models/gemini-3.1-flash-lite",
             "models/gemini-2.5-flash-lite",
-            "models/gemini-3-flash-preview",
+            "models/gemini-3.6-flash",
             "models/gemini-2.5-flash"
         )
 

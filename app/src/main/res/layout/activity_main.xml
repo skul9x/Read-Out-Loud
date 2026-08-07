@@ -217,27 +217,50 @@
             app:cardCornerRadius="28dp"
             app:strokeWidth="0dp">
 
-            <com.google.android.material.textfield.TextInputLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="Paste your text here to read aloud..."
-                app:boxStrokeWidth="0dp"
-                app:boxStrokeWidthFocused="0dp"
-                app:hintEnabled="true">
+                android:layout_height="match_parent">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editText"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
-                    android:gravity="top"
-                    android:inputType="textMultiLine"
-                    android:padding="24dp"
-                    android:scrollbars="vertical"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="32sp"
-                    android:lineSpacingExtra="4dp" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:hint="Paste your text here to read aloud..."
+                    app:boxStrokeWidth="0dp"
+                    app:boxStrokeWidthFocused="0dp"
+                    app:hintEnabled="true">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
+                        android:gravity="top"
+                        android:inputType="textMultiLine"
+                        android:paddingStart="16dp"
+                        android:paddingTop="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="56dp"
+                        android:scrollbars="vertical"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="20sp"
+                        android:lineSpacingExtra="4dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/copyTextButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="12dp"
+                    android:text="COPY"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_content_copy"
+                    app:iconSize="18dp"
+                    app:iconGravity="textStart" />
+            </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Reading Progress Area (M3) -->
@@ -299,7 +322,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="8dp">
+            android:paddingBottom="16dp">
 
             <TextView
                 android:id="@+id/statusText"
@@ -316,9 +339,9 @@
                 android:layout_marginTop="2dp"
                 android:gravity="center"
                 android:text="Copyright 2026 Nguyễn Duy Trường"
-                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
-                android:textColor="?attr/colorOutlineVariant"
-                android:alpha="0.6" />
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 

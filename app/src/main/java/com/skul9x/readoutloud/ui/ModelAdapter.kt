@@ -38,12 +38,10 @@ class ModelAdapter(
 
     inner class ModelViewHolder(private val binding: ItemModelBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: ModelItem, position: Int) {
+            binding.priorityBadgeText.text = "#${position + 1}"
             binding.modelNameText.text = item.name.substringAfter("/")
             binding.modelCheckBox.isChecked = item.isEnabled
-            
-            // Determine status
-            val status = getModelStatus(item.name)
-            binding.modelStatusText.text = status
+            binding.modelItemCardView.alpha = if (item.isEnabled) 1.0f else 0.55f
             
             binding.modelCheckBox.setOnClickListener { onToggle(position) }
             binding.moveUpButton.setOnClickListener { onMoveUp(position) }
@@ -62,35 +60,6 @@ class ModelAdapter(
             
             binding.moveDownButton.isEnabled = position < models.size - 1
             binding.moveDownButton.alpha = if (position < models.size - 1) 1.0f else 0.3f
-        }
-
-        private fun getModelStatus(modelName: String): String {
-            val keys = apiKeyManager.getApiKeys()
-            if (keys.isEmpty()) return "No API Keys"
-            
-            var availableCount = 0
-            var cooldownCount = 0
-            var exhaustedCount = 0
-            
-            keys.forEach { key ->
-                val pairHash = SecurityUtils.getPairHash(modelName, key)
-                // We don't have a direct way to check cooldown vs exhausted in ModelQuotaManager 
-                // without adding methods, but isAvailable checks both.
-                // For UI, let's just show a summary.
-                if (kotlinx.coroutines.runBlocking { quotaManager.isAvailable(pairHash) }) {
-                    availableCount++
-                } else {
-                    // Logic to distinguish would be nice, but let's keep it simple for now
-                    // based on what's available in ModelQuotaManager.
-                    exhaustedCount++ 
-                }
-            }
-            
-            return when {
-                availableCount == keys.size -> "Available"
-                availableCount > 0 -> "Partial ($availableCount/${keys.size})"
-                else -> "Unavailable / Cooldown"
-            }
         }
     }
 }

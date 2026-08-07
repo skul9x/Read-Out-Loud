@@ -25,6 +25,7 @@ class Phase04IntegrationVerificationTest {
 
     @Before
     fun setUp() {
+        ModelQuotaManager.resetInstance()
         context = mockk(relaxed = true)
         apiKeyManager = mockk()
         modelManager = mockk()
@@ -74,6 +75,7 @@ class Phase04IntegrationVerificationTest {
 
     @Test
     fun testIntegrationWithRealQuotaManager() = runTest {
+        ModelQuotaManager.resetInstance()
         val realContext = ApplicationProvider.getApplicationContext<Context>()
         val realQuotaManager = ModelQuotaManager.getInstance(realContext)
         realQuotaManager.clearStatus()

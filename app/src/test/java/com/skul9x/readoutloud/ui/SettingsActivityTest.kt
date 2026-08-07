@@ -42,7 +42,7 @@ class SettingsActivityTest {
         assertNotNull("Adapter should be set", recyclerView.adapter)
         
         val adapter = recyclerView.adapter as ModelAdapter
-        assertEquals("Should have 4 models by default", 4, adapter.itemCount)
+        assertEquals("Should have 5 models by default", 5, adapter.itemCount)
     }
 
     @Test
