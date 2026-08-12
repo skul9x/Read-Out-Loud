@@ -29,9 +29,7 @@ class TtsKaraokeTest {
     @Before
     fun setUp() {
         activity = Robolectric.buildActivity(MainActivity::class.java)
-            .create()
-            .start()
-            .resume()
+            .setup()
             .get()
     }
 

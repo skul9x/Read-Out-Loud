@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Material 3 Toolbar -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorSurface"
+            app:elevation="0dp">
+
+            <!-- Volume Button (Left) - Styled as Tonal for visibility -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/volumeButton"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp"
+                android:padding="8dp"
+                android:text="80%"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_volume_up"
+                app:iconSize="18dp"
+                app:iconGravity="textStart" />
+
+            <!-- Centered M3 Title -->
+            <TextView
+                android:id="@+id/toolbarTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="READ-OUT-LOUD"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <!-- Settings Button (Right) -->
+            <ImageButton
+                android:id="@+id/settingsButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_settings"
+                app:tint="?attr/colorOnSurface" />
+        </com.google.android.material.appbar.MaterialToolbar>
+
+        <!-- Material 3 TabLayout with icons + text -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="3dp"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextColor="?attr/colorOnSurfaceVariant"
+            app:tabIconTint="@color/tab_icon_color_selector"
+            app:tabTextAppearance="@style/TextAppearance.Material3.LabelLarge"
+            app:tabRippleColor="@color/tab_ripple_color" />
+
+        <!-- Thin divider below tabs -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorSurfaceVariant" />
+
+        <!-- ViewPager2 fills remaining space -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Loading Overlay (Gemini Processing) -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#AA000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="32dp">
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    app:indicatorSize="48dp"
+                    app:trackThickness="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Gemini đang xử lý..."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
+</FrameLayout>

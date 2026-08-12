@@ -71,6 +71,11 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all {
+                it.maxHeapSize = "3072m"
+                it.jvmArgs("-Xmx3072m", "-XX:+UseG1GC")
+                it.forkEvery = 30
+            }
         }
     }
 }
@@ -80,6 +85,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.viewpager2)
+    implementation(libs.androidx.fragment.ktx)
     
     // Gemini Integration Dependencies
     implementation(libs.kotlinx.coroutines.android)

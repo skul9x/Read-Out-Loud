@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface"
+    tools:context=".ui.PromptFragment">
+
+    <!-- Input Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:cardCornerRadius="24dp"
+        app:strokeWidth="0dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/promptInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nhập chủ đề bạn muốn tìm kiếm..."
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:endIconMode="clear_text"
+            app:hintAnimationEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/promptTopicInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:imeOptions="actionDone"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="1"
+                android:maxLines="3"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp"
+                android:scrollbars="vertical"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Dual Action Buttons Row (50/50) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/makePromptButton"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:gravity="center"
+            android:lines="1"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="Make Prompt"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeMaxTextSize="14sp"
+            app:autoSizeStepGranularity="1sp"
+            app:cornerRadius="24dp"
+            app:icon="@drawable/ic_content_copy"
+            app:iconGravity="textStart"
+            app:iconPadding="6dp"
+            app:iconSize="20dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/searchNowButton"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:gravity="center"
+            android:lines="1"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="Search Now"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeMaxTextSize="14sp"
+            app:autoSizeStepGranularity="1sp"
+            app:cornerRadius="24dp"
+            app:icon="@drawable/ic_search"
+            app:iconGravity="textStart"
+            app:iconPadding="6dp"
+            app:iconSize="20dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+    </LinearLayout>
+
+    <!-- Middle Workspace (Empty State / Result Card Stack) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="1">
+
+        <!-- Empty State (Shown initially) -->
+        <LinearLayout
+            android:id="@+id/emptyStateGroup"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp">
+
+            <ImageView
+                android:id="@+id/emptyStateIcon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:alpha="0.3"
+                android:src="@drawable/ic_search"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/emptyStateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:alpha="0.6"
+                android:gravity="center"
+                android:text="Nhập chủ đề để bắt đầu"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <!-- Inline Loading Card (centered, initially GONE) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/loadingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+            app:cardCornerRadius="24dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="32dp">
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/loadingIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    app:indicatorColor="?attr/colorPrimary"
+                    app:indicatorSize="48dp"
+                    app:trackThickness="4dp" />
+
+                <TextView
+                    android:id="@+id/loadingTitleText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:text="Đang tìm kiếm..."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/loadingSubtitleText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Gemini đang xử lý yêu cầu của bạn"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Error Card (initially GONE) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/errorCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            app:cardBackgroundColor="?attr/colorErrorContainer"
+            app:cardCornerRadius="24dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:id="@+id/errorTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚠️ Lỗi kết nối"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="?attr/colorOnErrorContainer"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/errorMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="?attr/colorOnErrorContainer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/retryButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="🔄 Thử lại"
+                    android:textColor="?attr/colorOnErrorContainer"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="?attr/colorOnErrorContainer" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Result Card (Hidden by default) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/resultCard"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Summarize Button (Hidden initially) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/summarizeResultButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Tóm tắt"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_summarize"
+                    app:iconGravity="textStart"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <androidx.core.widget.NestedScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:fillViewport="true">
+
+                    <TextView
+                        android:id="@+id/resultTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="4dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="20sp" />
+                </androidx.core.widget.NestedScrollView>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
+    <!-- Bottom Status Text -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:id="@+id/promptStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Ready"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+    </LinearLayout>
+
+</LinearLayout>

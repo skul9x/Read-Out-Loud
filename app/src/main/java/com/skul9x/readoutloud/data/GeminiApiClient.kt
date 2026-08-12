@@ -81,6 +81,13 @@ class GeminiApiClient(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun searchWithPrompt(prompt: String): GeminiResult {
+        return executeGeminiRequest { apiKey, model ->
+            tryGenerateContentWithPrompt(apiKey, model, prompt)
+        }
+    }
+
     private suspend fun executeGeminiRequest(
         callApi: suspend (apiKey: String, model: String) -> ApiResult
     ): GeminiResult {
