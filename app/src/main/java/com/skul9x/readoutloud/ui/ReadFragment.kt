@@ -147,6 +147,18 @@ class ReadFragment : Fragment() {
                 sharedViewModel.clearSummarizeEvent()
             }
         }
+
+        sharedViewModel.readAloudEvent.observe(viewLifecycleOwner) { text ->
+            if (!text.isNullOrBlank()) {
+                binding.editText.setText(text)
+                binding.editText.scrollTo(0, 0)
+
+                Snackbar.make(binding.root, "🔊 Đang đọc kết quả tìm kiếm...", Snackbar.LENGTH_SHORT).show()
+
+                checkPermissionsAndRead()
+                sharedViewModel.clearReadAloudEvent()
+            }
+        }
     }
 
     override fun onStart() {

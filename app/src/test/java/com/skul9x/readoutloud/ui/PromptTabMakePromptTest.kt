@@ -108,6 +108,7 @@ class PromptTabMakePromptTest {
         val searchNowButton = activity.findViewById<MaterialButton>(R.id.searchNowButton)
         val emptyStateGroup = activity.findViewById<View>(R.id.emptyStateGroup)
         val resultCard = activity.findViewById<View>(R.id.resultCard)
+        val resultActionsLayout = activity.findViewById<View>(R.id.resultActionsLayout)
         val summarizeResultButton = activity.findViewById<View>(R.id.summarizeResultButton)
         val promptStatusText = activity.findViewById<TextView>(R.id.promptStatusText)
 
@@ -116,6 +117,7 @@ class PromptTabMakePromptTest {
         assertNotNull(searchNowButton)
         assertNotNull(emptyStateGroup)
         assertNotNull(resultCard)
+        assertNotNull(resultActionsLayout)
         assertNotNull(summarizeResultButton)
         assertNotNull(promptStatusText)
 
@@ -124,7 +126,7 @@ class PromptTabMakePromptTest {
         assertFalse("Search now button should be disabled when topic is empty", searchNowButton.isEnabled)
         assertEquals(View.VISIBLE, emptyStateGroup.visibility)
         assertEquals(View.GONE, resultCard.visibility)
-        assertEquals(View.GONE, summarizeResultButton.visibility)
+        assertEquals(View.GONE, resultActionsLayout.visibility)
         assertEquals("Ready", promptStatusText.text.toString())
 
         // Type input

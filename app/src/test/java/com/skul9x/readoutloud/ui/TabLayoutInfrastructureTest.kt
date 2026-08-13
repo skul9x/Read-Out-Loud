@@ -108,4 +108,11 @@ class TabLayoutInfrastructureTest {
         assertEquals("offscreenPageLimit should be 1 to keep both fragments alive",
             1, viewPager.offscreenPageLimit)
     }
+
+    @Test
+    fun testViewPagerUserInputDisabled() {
+        val viewPager = activity.findViewById<ViewPager2>(R.id.viewPager)
+        assertNotNull(viewPager)
+        assertFalse("ViewPager2 user input (swipe) should be disabled", viewPager.isUserInputEnabled)
+    }
 }

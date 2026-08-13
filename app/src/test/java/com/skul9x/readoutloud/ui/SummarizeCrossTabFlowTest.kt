@@ -2,6 +2,7 @@ package com.skul9x.readoutloud.ui
 
 import android.content.Context
 import android.view.View
+import android.widget.EditText
 import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import androidx.test.core.app.ApplicationProvider
@@ -158,5 +159,41 @@ class SummarizeCrossTabFlowTest {
         // Simulating onResume when returning to prompt fragment
         promptFragment.onResume()
         assertTrue("summarizeResultButton should be re-enabled on resume", summarizeButton.isEnabled)
+    }
+
+    @Test
+    fun testMarkdownSearchNowResultCrossTabSummarizeFlow() {
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        val viewPager = activity.findViewById<ViewPager2>(R.id.viewPager)
+        viewPager.currentItem = 1
+        Shadows.shadowOf(activity.mainLooper).idle()
+
+        val promptFragment = activity.supportFragmentManager.findFragmentByTag("f1") as? PromptFragment
+            ?: activity.supportFragmentManager.fragments.firstNotNullOf { it as? PromptFragment }
+
+        val summarizeButton = activity.findViewById<MaterialButton>(R.id.summarizeResultButton)
+        val readEditText = activity.findViewById<EditText>(R.id.editText)
+        assertNotNull("summarizeResultButton must exist", summarizeButton)
+        assertNotNull("readEditText must exist", readEditText)
+
+        val markdownContent = "## Tiêu đề\n**Điểm cốt lõi** của báo cáo AI"
+        promptFragment.showResult(markdownContent, "models/gemini-2.0-flash")
+        Shadows.shadowOf(activity.mainLooper).idle()
+
+        assertTrue(summarizeButton.isEnabled)
+
+        // Click summarize button
+        summarizeButton.performClick()
+        Shadows.shadowOf(activity.mainLooper).idle()
+
+        // Tab should have switched to Read tab (index 0)
+        assertEquals(0, viewPager.currentItem)
+
+        // Read tab should have received the text content
+        val textInReadTab = readEditText.text.toString()
+        assertTrue("ReadFragment must receive the markdown text content", textInReadTab.contains("Điểm cốt lõi"))
+
+        // Ensure swipe gestures are disabled on ViewPager2 as per Phase 01 requirement
+        assertFalse("ViewPager2 userInputEnabled must be false", viewPager.isUserInputEnabled)
     }
 }

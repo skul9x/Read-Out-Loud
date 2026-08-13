@@ -3,6 +3,7 @@ package com.skul9x.readoutloud.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -23,6 +24,7 @@ import com.skul9x.readoutloud.MainActivity
 import com.skul9x.readoutloud.data.GeminiApiClient
 import com.skul9x.readoutloud.databinding.FragmentPromptBinding
 import com.skul9x.readoutloud.utils.PromptTemplateHelper
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -33,7 +35,9 @@ class PromptFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
     private lateinit var geminiApiClient: GeminiApiClient
+    private lateinit var markwon: Markwon
     private var searchJob: Job? = null
+    private var currentResultText: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,6 +51,7 @@ class PromptFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         geminiApiClient = GeminiApiClient(requireContext())
+        markwon = Markwon.create(requireContext())
         setupInputAndButtons()
         setupListeners()
     }
@@ -100,6 +105,7 @@ class PromptFragment : Fragment() {
         }
 
         binding.summarizeResultButton.setOnClickListener {
+            triggerHapticFeedback()
             val resultText = binding.resultTextView.text?.toString() ?: ""
             if (resultText.isNotBlank()) {
                 // Scale animation for feedback
@@ -115,6 +121,43 @@ class PromptFragment : Fragment() {
 
                 // Smooth tab switch
                 (requireActivity() as? MainActivity)?.switchToTab(0)
+            }
+        }
+
+        binding.readResultButton.setOnClickListener {
+            triggerHapticFeedback()
+            val resultText = binding.resultTextView.text?.toString() ?: ""
+            if (resultText.isNotBlank()) {
+                // Scale animation for feedback
+                it.animate().scaleX(0.95f).scaleY(0.95f).setDuration(75).withEndAction {
+                    it.animate().scaleX(1f).scaleY(1f).setDuration(75).start()
+                }.start()
+
+                // Disable to prevent double-tap
+                it.isEnabled = false
+
+                // Post to shared ViewModel
+                sharedViewModel.requestReadAloud(resultText)
+
+                // Smooth tab switch
+                (requireActivity() as? MainActivity)?.switchToTab(0)
+            }
+        }
+
+        binding.showResultButton.setOnClickListener {
+            triggerHapticFeedback()
+            val resultText = if (currentResultText.isNotBlank()) currentResultText else (binding.resultTextView.text?.toString() ?: "")
+            val topic = binding.promptTopicInput.text?.toString()?.trim() ?: ""
+            if (resultText.isNotBlank()) {
+                it.animate().scaleX(0.95f).scaleY(0.95f).setDuration(75).withEndAction {
+                    it.animate().scaleX(1f).scaleY(1f).setDuration(75).start()
+                }.start()
+
+                val intent = Intent(requireContext(), FullScreenReaderActivity::class.java).apply {
+                    putExtra(FullScreenReaderActivity.EXTRA_CONTENT, resultText)
+                    putExtra(FullScreenReaderActivity.EXTRA_TOPIC, topic)
+                }
+                startActivity(intent)
             }
         }
     }
@@ -174,29 +217,37 @@ class PromptFragment : Fragment() {
     }
 
     fun showLoading() {
+        currentResultText = ""
         binding.emptyStateGroup.visibility = View.GONE
         binding.resultCard.visibility = View.GONE
         binding.errorCard.visibility = View.GONE
+        binding.resultActionsLayout.visibility = View.GONE
         fadeIn(binding.loadingCard, 200L)
 
         binding.promptTopicInput.isEnabled = false
         binding.makePromptButton.isEnabled = false
         binding.searchNowButton.isEnabled = false
+        binding.summarizeResultButton.isEnabled = false
+        binding.readResultButton.isEnabled = false
+        binding.showResultButton.isEnabled = false
         binding.promptStatusText.text = "Đang tìm kiếm..."
     }
 
     fun showResult(text: String, model: String) {
+        currentResultText = text.trim()
         binding.loadingCard.visibility = View.GONE
         binding.errorCard.visibility = View.GONE
         binding.emptyStateGroup.visibility = View.GONE
 
-        binding.resultTextView.text = text
+        markwon.setMarkdown(binding.resultTextView, text.trim())
         fadeIn(binding.resultCard, 300L)
 
         binding.summarizeResultButton.isEnabled = true
-        binding.summarizeResultButton.postDelayed({
+        binding.readResultButton.isEnabled = true
+        binding.showResultButton.isEnabled = true
+        binding.resultActionsLayout.postDelayed({
             if (_binding != null) {
-                slideDown(binding.summarizeResultButton, 200L)
+                slideDown(binding.resultActionsLayout, 200L)
             }
         }, 100L)
 
@@ -208,9 +259,11 @@ class PromptFragment : Fragment() {
     }
 
     fun showError(title: String, message: String) {
+        currentResultText = ""
         binding.loadingCard.visibility = View.GONE
         binding.resultCard.visibility = View.GONE
-        binding.emptyStateGroup.visibility = View.GONE
+        binding.errorCard.visibility = View.GONE
+        binding.resultActionsLayout.visibility = View.GONE
 
         binding.errorTitle.text = title
         binding.errorMessage.text = message
@@ -273,6 +326,8 @@ class PromptFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         _binding?.summarizeResultButton?.isEnabled = true
+        _binding?.readResultButton?.isEnabled = true
+        _binding?.showResultButton?.isEnabled = true
     }
 
     override fun onDestroyView() {
@@ -281,7 +336,10 @@ class PromptFragment : Fragment() {
             b.loadingCard.animate().cancel()
             b.resultCard.animate().cancel()
             b.errorCard.animate().cancel()
+            b.resultActionsLayout.animate().cancel()
             b.summarizeResultButton.animate().cancel()
+            b.readResultButton.animate().cancel()
+            b.showResultButton.animate().cancel()
         }
         super.onDestroyView()
         _binding = null

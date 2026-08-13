@@ -18,8 +18,10 @@ mockk = "1.13.12"
 androidxTestCore = "1.6.1"
 viewpager2 = "1.1.0"
 fragmentKtx = "1.8.6"
+markwon = "4.6.2"
 
 [libraries]
+markwon-core = { group = "io.noties.markwon", name = "core", version.ref = "markwon" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

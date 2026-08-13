@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.markwon.core)
     
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

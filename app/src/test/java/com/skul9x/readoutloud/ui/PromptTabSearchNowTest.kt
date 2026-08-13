@@ -163,7 +163,7 @@ class PromptTabSearchNowTest {
 
         assertEquals(View.GONE, loadingCard.visibility)
         assertEquals(View.VISIBLE, resultCard.visibility)
-        assertEquals("Báo cáo về tương lai AI", resultTextView.text.toString())
+        assertEquals("Báo cáo về tương lai AI", resultTextView.text.toString().trim())
         assertEquals("Gemini: Done (gemini-2.0-flash)", promptStatusText.text.toString())
         assertTrue(topicInput.isEnabled)
         assertTrue(makePromptButton.isEnabled)

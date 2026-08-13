@@ -39,6 +39,12 @@
             android:exported="false"
             android:label="Settings"
             android:theme="@style/Theme.ReadOutLoud" />
+
+        <activity
+            android:name=".ui.FullScreenReaderActivity"
+            android:exported="false"
+            android:label="Full Screen Reader"
+            android:theme="@style/Theme.ReadOutLoud" />
     </application>
 
 </manifest>
