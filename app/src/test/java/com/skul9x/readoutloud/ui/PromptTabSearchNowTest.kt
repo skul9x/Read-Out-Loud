@@ -47,10 +47,11 @@ class PromptTabSearchNowTest {
         val topic = "Test topic"
         val builtPrompt = PromptTemplateHelper.buildPrompt(template, topic)
 
-        assertTrue("Built prompt must start with the template instructions",
-            builtPrompt.startsWith("Bạn hãy đóng vai một CHUYÊN GIA NGHIÊN CỨU"))
-        assertTrue("Built prompt must end with the user's topic",
-            builtPrompt.trimEnd().endsWith(topic))
+        val normalized = builtPrompt.replace("\r\n", "\n").trim()
+        assertTrue("Built prompt must start with the template JSON role",
+            normalized.startsWith("{\n  \"role\": \"EXPERT IN MULTILINGUAL INTERNET RESEARCH"))
+        assertTrue("Built prompt must end with topic_to_research",
+            normalized.endsWith("\"topic_to_research\": \"Test topic\"\n}"))
     }
 
     @Test
@@ -72,11 +73,10 @@ class PromptTabSearchNowTest {
         val topic = "chip bán dẫn TSMC 2nm"
         val builtPrompt = PromptTemplateHelper.buildPrompt(template, topic)
 
-        assertTrue(builtPrompt.contains("NGUYÊN TẮC TÌM KIẾM ĐA NGÔN NGỮ"))
-        assertTrue(builtPrompt.contains("ĐỐI CHIẾU THÔNG TIN"))
-        assertTrue(builtPrompt.contains("KIỂM CHỨNG"))
+        assertTrue(builtPrompt.contains("multi_language_search"))
+        assertTrue(builtPrompt.contains("country_specific_rule"))
         assertTrue(builtPrompt.contains(topic))
-        assertFalse(builtPrompt.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+        assertFalse(builtPrompt.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
         assertTrue("Built prompt should be substantial (>5000 chars)", builtPrompt.length > 5000)
     }
 

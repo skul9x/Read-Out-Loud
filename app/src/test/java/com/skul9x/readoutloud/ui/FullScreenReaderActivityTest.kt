@@ -105,40 +105,43 @@ class FullScreenReaderActivityTest {
         if (navButton != null) {
             navButton.performClick()
         } else {
-            // Alternatively trigger onBackPressedDispatcher
-            activity.onBackPressedDispatcher.onBackPressed()
+            // Alternatively trigger navigation click directly on toolbar
+            toolbar.performClick()
         }
 
         assertTrue("Activity should finish after back navigation", activity.isFinishing)
     }
 
     @Test
-    fun testSwipeBackGestureTriggersFinish() {
+    fun testSystemBackPressedFinishesActivity() {
+        val intent = Intent().apply {
+            putExtra(FullScreenReaderActivity.EXTRA_CONTENT, "Some content")
+        }
+        val activity = Robolectric.buildActivity(FullScreenReaderActivity::class.java, intent).setup().get()
+        assertFalse("Activity should not be finishing initially", activity.isFinishing)
+
+        activity.onBackPressedDispatcher.onBackPressed()
+        assertTrue("Activity should finish after system back press", activity.isFinishing)
+    }
+
+    @Test
+    fun testSwipeBackGestureIsDisabled() {
         val intent = Intent().apply {
             putExtra(FullScreenReaderActivity.EXTRA_CONTENT, "Swipe gesture test content")
         }
         val activity = Robolectric.buildActivity(FullScreenReaderActivity::class.java, intent).setup().get()
         assertFalse("Activity should not be finishing initially", activity.isFinishing)
 
-        // Simulate swipe right gesture: start at x=10, end at x=300 with positive velocity
+        // Simulate swipe right gesture: down at x=10, move to x=300, up at x=300
         val downEvent = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 200f, 0)
         val moveEvent = MotionEvent.obtain(0L, 50L, MotionEvent.ACTION_MOVE, 300f, 200f, 0)
+        val upEvent = MotionEvent.obtain(0L, 100L, MotionEvent.ACTION_UP, 300f, 200f, 0)
 
-        // Test dispatch or direct gesture trigger
         activity.dispatchTouchEvent(downEvent)
         activity.dispatchTouchEvent(moveEvent)
+        activity.dispatchTouchEvent(upEvent)
 
-        // Direct fling test via gesture detector listener
-        val e1 = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 200f, 0)
-        val e2 = MotionEvent.obtain(0L, 100L, MotionEvent.ACTION_UP, 300f, 200f, 0)
-        val handled = activity.gestureDetector.onTouchEvent(e1) || activity.gestureDetector.onTouchEvent(e2)
-
-        // If gesture detector onTouchEvent didn't simulate fling without physics loop, we can test onTouchEvent directly or verify finish
-        if (!activity.isFinishing) {
-            // Verify OnBackPressedCallback also finishes
-            activity.onBackPressedDispatcher.onBackPressed()
-        }
-        assertTrue("Activity should be finishing", activity.isFinishing)
+        assertFalse("Activity should NOT be finishing on horizontal swipe gesture", activity.isFinishing)
     }
 
     @Test

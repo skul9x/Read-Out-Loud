@@ -42,7 +42,9 @@ class PromptTabMakePromptTest {
         val template = PromptTemplateHelper.loadTemplate(context)
         assertTrue("Template must not be blank", template.isNotBlank())
         assertTrue("Template must contain the placeholder",
-            template.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+            template.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
+        assertTrue("Template must contain the expert role",
+            template.contains("\"role\": \"EXPERT IN MULTILINGUAL INTERNET RESEARCH"))
     }
 
     @Test
@@ -52,10 +54,12 @@ class PromptTabMakePromptTest {
         val result = PromptTemplateHelper.buildPrompt(template, topic)
 
         assertFalse("Built prompt must NOT contain placeholder",
-            result.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+            result.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
         assertTrue("Built prompt must contain the user's topic", result.contains(topic))
-        assertTrue("Built prompt must still contain research instructions",
-            result.contains("CHUYÊN GIA NGHIÊN CỨU THÔNG TIN"))
+        assertTrue("Built prompt must contain topic_to_research key with topic value",
+            result.contains("\"topic_to_research\": \"chiến tranh thương mại Mỹ Trung 2026\""))
+        assertTrue("Built prompt must contain autonomous_execution",
+            result.contains("\"autonomous_execution\""))
     }
 
     @Test
@@ -64,19 +68,26 @@ class PromptTabMakePromptTest {
         val topic = "AI regulation in EU"
         val result = PromptTemplateHelper.buildPrompt(template, topic)
 
-        assertTrue("Must contain multilingual search principle",
-            result.contains("NGUYÊN TẮC TÌM KIẾM ĐA NGÔN NGỮ"))
-        assertTrue("Must contain source quality section",
-            result.contains("ƯU TIÊN NGUỒN GỐC VÀ NGUỒN CHẤT LƯỢNG CAO"))
-        assertTrue("Must contain final synthesis section",
-            result.contains("TỔNG HỢP CUỐI CÙNG"))
+        assertTrue("Must contain research_principles",
+            result.contains("\"research_principles\""))
+        assertTrue("Must contain country_specific_rule",
+            result.contains("\"country_specific_rule\""))
+        assertTrue("Must contain ultimate_goal",
+            result.contains("\"ultimate_goal\""))
+        assertTrue("Must contain execution_rule",
+            result.contains("\"execution_rule\""))
     }
 
     @Test
     fun testBuildPromptWithEmptyTopicReplacesPlaceholder() {
-        val template = "Test {THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM} end"
+        val template = "Test [INFORMATION/NEWS/TOPIC I WANT TO RESEARCH] end"
         val result = PromptTemplateHelper.buildPrompt(template, "")
         assertEquals("Test  end", result)
+
+        val fullTemplate = PromptTemplateHelper.loadTemplate(context)
+        val fullResult = PromptTemplateHelper.buildPrompt(fullTemplate, "")
+        assertFalse(fullResult.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
+        assertTrue(fullResult.contains("\"topic_to_research\": \"\""))
     }
 
     @Test
@@ -93,7 +104,7 @@ class PromptTabMakePromptTest {
         val clipText = clipboard.primaryClip?.getItemAt(0)?.text.toString()
         assertTrue("Clipboard must contain the topic", clipText.contains(topic))
         assertFalse("Clipboard must NOT contain placeholder",
-            clipText.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+            clipText.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
     }
 
     @Test
@@ -145,7 +156,7 @@ class PromptTabMakePromptTest {
         assertTrue(clipboard.hasPrimaryClip())
         val clipText = clipboard.primaryClip?.getItemAt(0)?.text.toString()
         assertTrue(clipText.contains("Quantum Computing 2026"))
-        assertFalse(clipText.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+        assertFalse(clipText.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
 
         // Clear input
         promptTopicInput.setText("")

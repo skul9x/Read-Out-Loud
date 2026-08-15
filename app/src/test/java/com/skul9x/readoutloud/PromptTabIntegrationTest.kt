@@ -53,9 +53,9 @@ class PromptTabIntegrationTest {
     fun testPromptTemplateLoadsCorrectly() {
         val template = PromptTemplateHelper.loadTemplate(context)
         assertTrue("Template must contain research expert role",
-            template.contains("CHUYÊN GIA NGHIÊN CỨU"))
+            template.contains("EXPERT IN MULTILINGUAL INTERNET RESEARCH"))
         assertTrue("Template must contain placeholder",
-            template.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+            template.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
     }
 
     @Test
@@ -66,7 +66,7 @@ class PromptTabIntegrationTest {
 
         assertTrue("Prompt must contain topic", prompt.contains(topic))
         assertFalse("Prompt must NOT contain placeholder",
-            prompt.contains("{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"))
+            prompt.contains("[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"))
         assertTrue("Prompt must be longer than 5000 chars", prompt.length > 5000)
     }
 

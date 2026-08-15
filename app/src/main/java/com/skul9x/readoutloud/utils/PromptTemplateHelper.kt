@@ -4,7 +4,7 @@ import android.content.Context
 import com.skul9x.readoutloud.R
 
 object PromptTemplateHelper {
-    private const val PLACEHOLDER = "{THÔNG TIN/TIN TỨC/CHỦ ĐỀ TÔI MUỐN TÌM KIẾM}"
+    private const val PLACEHOLDER = "[INFORMATION/NEWS/TOPIC I WANT TO RESEARCH]"
 
     fun loadTemplate(context: Context): String {
         val resId = context.resources.getIdentifier("prompt_template", "raw", context.packageName)
