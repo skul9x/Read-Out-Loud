@@ -199,6 +199,7 @@ class ReadFragment : Fragment() {
                 Toast.makeText(requireContext(), "Không có nội dung để dọn dẹp", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            stopReading()
             sharedPreferences.edit().putBoolean(KEY_GEMINI_ENABLED, true).apply()
             updateStatus("Gemini AI: ON")
             processWithAI(textToPolish)
@@ -211,6 +212,7 @@ class ReadFragment : Fragment() {
                 Toast.makeText(requireContext(), "Không có nội dung để tóm tắt", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            stopReading()
             processSummarizeWithAI(textToSummarize)
         }
 
@@ -340,10 +342,12 @@ class ReadFragment : Fragment() {
                 val result = geminiApiClient.cleanTextWithGemini(text)
 
                 withContext(Dispatchers.Main) {
+                    if (_binding == null) return@withContext
                     setLoading(false)
                     when (result) {
                         is GeminiApiClient.GeminiResult.Success -> {
                             binding.editText.setText(result.text)
+                            binding.editText.scrollTo(0, 0)
                             updateStatus("Gemini: Done (${result.model.substringAfter("/")})")
                         }
                         else -> {
@@ -351,13 +355,17 @@ class ReadFragment : Fragment() {
                             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                             updateStatus("Lỗi Gemini")
                             binding.editText.setText(text.replace(Regex("[*#_`~]"), ""))
+                            binding.editText.scrollTo(0, 0)
                         }
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (_binding == null) return@launch
                 setLoading(false)
                 updateStatus("Lỗi hệ thống")
                 binding.editText.setText(text.replace(Regex("[*#_`~]"), ""))
+                binding.editText.scrollTo(0, 0)
             }
         }
     }
@@ -380,10 +388,12 @@ class ReadFragment : Fragment() {
                 val result = geminiApiClient.summarizeTextWithGemini(text)
 
                 withContext(Dispatchers.Main) {
+                    if (_binding == null) return@withContext
                     setLoading(false)
                     when (result) {
                         is GeminiApiClient.GeminiResult.Success -> {
                             binding.editText.setText(result.text)
+                            binding.editText.scrollTo(0, 0)
                             updateStatus("Gemini: Tóm tắt xong (${result.model.substringAfter("/")})")
                         }
                         else -> {
@@ -394,6 +404,8 @@ class ReadFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (_binding == null) return@launch
                 setLoading(false)
                 updateStatus("Lỗi hệ thống")
             }

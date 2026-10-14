@@ -31,3 +31,6 @@ local.properties
 *.jks
 *.keystore
 keystore_base64.txt
+
+# Scratch scripts
+scratch*.sh

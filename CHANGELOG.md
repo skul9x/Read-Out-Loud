@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-10-14] - AI Text & Summarize Best Practices Fix
+### Added
+- **Unit Test Regression Suite**: Added comprehensive test cases in `AiTextButtonTest.kt` verifying TTS stop, progress reset to 0%, scroll reset to `(0, 0)`, and coroutine lifecycle cancellation safety.
+
+### Changed
+- **Immediate TTS Interruption**: Clicking `aiTextButton` or `summarizeButton` immediately triggers `stopReading()`, clears visual karaoke highlights, dispatches `TtsService.ACTION_STOP`, and resets reading progress to 0%.
+- **Scroll Reset to Top**: Automatically resets `binding.editText.scrollTo(0, 0)` upon receiving AI polished text or fallback regex text to ensure users start reading from the beginning.
+
+### Fixed
+- **Coroutine Cancellation Best Practices**: Prevented swallowing `kotlinx.coroutines.CancellationException` in `processWithAI` and `processSummarizeWithAI` catch blocks, adhering to Kotlin structured concurrency.
+- **View Binding Safety**: Added `_binding == null` safety guards before UI updates and in catch handlers to prevent `NullPointerException` crashes when Fragment views are destroyed during background network operations.
+
 ## [2026-03-19] - TTS Karaoke UI & Interaction
 ### Added
 - **Karaoke Highlighting**: Full word-by-word highlighting with orange background (`#FF9800`) and bold font for the currently spoken text.

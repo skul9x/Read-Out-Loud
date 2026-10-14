@@ -3,7 +3,7 @@
   "project": {
     "name": "Read-Out-Loud",
     "type": "Android (Kotlin)",
-    "status": "v1.4.0 - Gemini API & Model Rotation Alignment Complete"
+    "status": "v1.5.0 - AI Text Best Practices Fix & Robust Lifecycle Alignment Complete"
   },
   "tech_stack": {
     "core": "Kotlin, Android SDK (Level 35)",
@@ -40,7 +40,10 @@
     "Granular MD5 Model-Key hashing for quota tracking",
     "300ms Cooldown Delay on 429 RPM / 503 Service errors",
     "Physical Network Error Termination (Immediate stop on UnknownHost/ConnectException)",
-    "Interactive Settings UI with Model CRUD & Self-Healing list recovery"
+    "Interactive Settings UI with Model CRUD & Self-Healing list recovery",
+    "Immediate TTS Stop & Progress Reset on AI Actions",
+    "Auto-reset scroll to (0, 0) on text reload",
+    "Lifecycle-safe Coroutine Cancellation & View Binding Guards"
   ],
   "knowledge_items": {
     "patterns": [
@@ -50,15 +53,19 @@
       "Model-First, Key-Second Rotation Strategy for robustness",
       "Efficient Highlight: Using BackgroundColorSpan & clearHighlight for low UI overhead",
       "Interaction-Aware Scroll: postDelayed runnable handles 3s auto-scroll resume",
-      "Robust MD5 Quota Hashing: MD5(ModelName_ApiKey) separates quota statuses across keys",
-      "Synchronous Storage Writes: Using commit() over apply() in SharedPreferences to prevent race conditions during heavy parallel testing"
+      "Robust MD5 Quota Hashing: MD5(ModelName_ApiKey) separates quota status across keys",
+      "Synchronous Storage Writes: Using commit() over apply() in SharedPreferences to prevent race conditions during heavy parallel testing",
+      "Coroutine Cancellation Best Practice: Always check `if (e is CancellationException) throw e` before generic exception handling",
+      "Fragment View Binding Safety: Guard `_binding == null` before updating views across Dispatchers.Main and catch blocks",
+      "Scroll Reset on Dynamic Content: Reset `binding.editText.scrollTo(0, 0)` on text replacement"
     ],
     "gotchas": [
       "onRangeStart callback for TTS requires absolute offset calculation when text is chunked",
       "Material 3 style names differ slightly (e.g., TonalButton vs FilledTonalButton in older docs)",
       "DataBinding requires full project rebuild after major layout refactors to sync view IDs",
       "ObjectAnimator on scrollY needs careful layout inspection to avoid off-screen jump",
-      "MockK static mock leakages must be explicitly cleaned up with unmockkAll() in @After blocks to avoid test interference"
+      "MockK static mock leakages must be explicitly cleaned up with unmockkAll() in @After blocks to avoid test interference",
+      "Swallowing CancellationException in coroutines prevents lifecycleScope from cancelling child jobs properly"
     ]
   }
 }
